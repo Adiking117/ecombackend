@@ -35,6 +35,20 @@ const getUser = asyncHandler(async(req,res)=>{
     )
 })
 
+// make another user a admin 
+const makeUserAdmin = asyncHandler(async(req,res)=>{
+    const userTobeAdmin = await User.findById({_id: req.params._id})
+    console.log("userTobeAdmin",userTobeAdmin)
+    if(!userTobeAdmin){
+        throw new ApiError(401,"USer doesnt exist")
+    }
+    
+})
+
+// delete user
+const deleteUser = asyncHandler(async(req,res)=>{
+
+})
 
 // add gallery images , view image , view all images , delete images
 const addGalleryImages = asyncHandler(async(req,res)=>{
@@ -87,8 +101,12 @@ const viewGalleryImage = asyncHandler(async(req,res)=>{
 })
 
 
-const deleteGalleryImages = asyncHandler(async(req,res)=>{
-    const imageToBeDeleted = await Gallery.find({ _id:req.params.id })
+const deleteGalleryImage = asyncHandler(async(req,res)=>{
+    const imageToBeDeleted = await Gallery.findById({ _id:req.params.id })
+
+    console.log("type of to be deleted",typeof(imageToBeDeleted))
+
+    console.log("image to be deleted",imageToBeDeleted)
     if(!imageToBeDeleted){
         throw new ApiError(404,"Image Not found")
     }
@@ -101,7 +119,6 @@ const deleteGalleryImages = asyncHandler(async(req,res)=>{
 })
 
 
-// make another user a admin 
 
 // add products , update products , delete products , get product reviews
 
@@ -113,7 +130,9 @@ export{
     getAllUser,
     getUser,
     addGalleryImages,
-    deleteGalleryImages,
+    deleteGalleryImage,
     viewGalleryImage,
-    viewGalleryImages
+    viewGalleryImages,
+    makeUserAdmin,
+    deleteUser
 }
