@@ -158,7 +158,7 @@ const getDetails = asyncHandler(async(req,res)=>{
     if(!user){
         throw new ApiError(400,"USer not found")
     }
-    if(user.isLoggedIn===false){
+    if(!user?.refreshToken){
         throw new ApiError(400,"You are not logged in")
     }
     return res

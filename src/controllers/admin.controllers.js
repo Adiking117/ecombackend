@@ -38,6 +38,7 @@ const getUser = asyncHandler(async(req,res)=>{
 
 // add gallery images , view image , view all images , delete images
 const addGalleryImages = asyncHandler(async(req,res)=>{
+    console.log(req.files)
     const imageLocalPath = req.files.image[0].path;
     if(!imageLocalPath){
         throw new ApiError(400,"Image not found")
