@@ -6,9 +6,9 @@ import { User } from "../models/user.models.js";
 export const verifyJWT = asyncHandler(async(req,res,next) =>{ 
     try {
 
-        console.log("reqbody jwt",req.body)
-        console.log("cookies in middleware" , req.cookies)
-        console.log("reqcookiesaccesss : ",req.cookies.accessToken)
+        //console.log("reqbody jwt",req.body)
+        //console.log("cookies in middleware" , req.cookies)
+        //console.log("reqcookiesaccesss : ",req.cookies.accessToken)
 
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","")
         
