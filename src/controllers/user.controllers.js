@@ -150,6 +150,20 @@ const updateUserProfile = asyncHandler(async(req,res)=>{
 })
 
 
+const getDetails = asyncHandler(async(req,res)=>{
+    console.log("get details triggred")
+    const user = await User.find({ userName:req.user.userName })
+    if(!user){
+        throw new ApiError(400,"USer not found")
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user," ")
+    )
+})
+
+
 const logoutUser = asyncHandler(async(req,res)=>{
     console.log("logout controller", req.user)
     const {userName} = req.user.userName;
@@ -175,7 +189,7 @@ const logoutUser = asyncHandler(async(req,res)=>{
     .clearCookie("accessToken",options)
     .clearCookie("refreshToken",options)
     .json(
-        new ApiResponse(200,{},`User ${userName} logged out`)
+        new ApiResponse(200,{},`User logged out`)
     )
 })
 
@@ -193,5 +207,6 @@ export {
     registerUser,
     loginUser,
     updateUserProfile,
+    getDetails,
     logoutUser
 }
