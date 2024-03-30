@@ -41,7 +41,6 @@ const registerUser = asyncHandler(async(req,res)=>{
         firstName,
         lastName,
         password,
-        isLoggedIn:false,
         role:'user'
     })
 
@@ -84,18 +83,6 @@ const loginUser = asyncHandler(async(req,res)=>{
     }
 
     const { accessToken,refreshToken } = await generateUserAccessRefreshToken(user._id)
-
-    await User.findOneAndUpdate(
-        {userName},
-        {
-            $set:{
-                isLoggedIn:true
-            }
-        },
-        {
-            new:true
-        }
-    )
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
@@ -166,7 +153,8 @@ const updateUserProfile = asyncHandler(async(req,res)=>{
 const getDetails = asyncHandler(async(req,res)=>{
     
     console.log("get details triggred")
-    const user = await User.findOne({ userName:req.user.userName })
+    const {userName} = req.user;
+    const user = await User.findOne({ userName })
     if(!user){
         throw new ApiError(400,"USer not found")
     }
@@ -183,32 +171,21 @@ const getDetails = asyncHandler(async(req,res)=>{
 
 const logoutUser = asyncHandler(async(req,res)=>{
     console.log("logout controller", req.user)
-    const {userName} = req.user.userName;
-    // const userName = req.user.userName;
-    // await User.findOneAndUpdate(
-    //     {userName},
-    //     {
-    //         $set:{
-    //             refreshToken: undefined
-    //         }
-    //     },
-    //     {
-    //         new:true
-    //     }
-    // )
-    await User.findOneAndUpdate(
-        {userName},
+    await User.findByIdAndUpdate(
+        req.user._id,
         {
-            $set:{
-                isLoggedIn:false
+            $unset: {
+                refreshToken: 1 
             }
+        },
+        {
+            new:true
         }
     )
 
     const options = {
         httpOnly:true,
         secure:true,
-        expires: new Date(Date.now())
     }
 
     return res
@@ -219,14 +196,6 @@ const logoutUser = asyncHandler(async(req,res)=>{
         new ApiResponse(200,`User logged out`)
     )
 })
-
-// const logoutUser = asyncHandler(async(req,res)=>{
-//     res.cookie('refreshToken',null,{
-//         expires:new Date(Date.now()),
-//         httpOnly:true,
-//     })
-//     res.status(200).json(new ApiResponse(200,"USer Logged out"))
-// })
 
 
 // get all products , view a product , add product to cart
