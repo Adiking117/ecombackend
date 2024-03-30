@@ -9,7 +9,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 
 // get all users , get a user detail
 const getAllUser = asyncHandler(async(req,res)=>{
-    const user = await User.find({ role:'user' }).select("-password");
+    const user = await User.find().select("-password");
     console.log("USers in db",user)
     if(user.length === 0){
         throw new ApiError(404,"User not found")
@@ -37,17 +37,39 @@ const getUser = asyncHandler(async(req,res)=>{
 
 // make another user a admin 
 const makeUserAdmin = asyncHandler(async(req,res)=>{
-    const userTobeAdmin = await User.findById({_id: req.params._id})
-    console.log("userTobeAdmin",userTobeAdmin)
+    const userTobeAdmin = await User.findById({ _id: req.params.id }).select("-password")
+    //console.log("userTobeAdmin",userTobeAdmin)
     if(!userTobeAdmin){
-        throw new ApiError(401,"USer doesnt exist")
+        throw new ApiError(400,"USer doesnt exist")
     }
-    
+    // await userTobeAdmin.role = 'admin'
+    userTobeAdmin.role = 'admin'
+    userTobeAdmin.save();
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,userTobeAdmin,"Admin updated successfully")
+    )
+
 })
 
 // delete user
 const deleteUser = asyncHandler(async(req,res)=>{
-
+    const userToBeDeleted = await User.findById({_id:req.params.id})
+    console.log("userTobe dleeted",userToBeDeleted)
+    if(!userToBeDeleted){
+        throw new ApiError(400,"User doesnt exist")
+    }
+    if(userToBeDeleted.role ==='admin'){
+        throw new ApiError(401,"You cant delete admin")
+    }
+    await User.findByIdAndDelete(userToBeDeleted._id)
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,"User deleted Successfully")
+    )
 })
 
 // add gallery images , view image , view all images , delete images
