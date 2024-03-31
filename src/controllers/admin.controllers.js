@@ -74,7 +74,7 @@ const deleteUser = asyncHandler(async(req,res)=>{
 
 // add gallery images , view image , view all images , delete images
 const addGalleryImages = asyncHandler(async(req,res)=>{
-    console.log(req.files)
+    console.log("req.files",req.files)
     const imageLocalPath = req.files.image[0].path;
     if(!imageLocalPath){
         throw new ApiError(400,"Image not found")
@@ -83,6 +83,7 @@ const addGalleryImages = asyncHandler(async(req,res)=>{
     if(!image){
         throw new ApiError(400,"Image requried")
     }
+    console.log("image",image)
     const addedImage = await Gallery.create({
         imgurl : image.url
     })

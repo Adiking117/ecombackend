@@ -29,6 +29,18 @@ adminRouter.route("/view/gallery/addImage").post(
         addGalleryImages
 );
 
+
+// test route 
+// adminRouter.route("/view/gallery/addImage").post(
+//     upload.fields([
+//         {
+//             name:"image",
+//             maxCount: 1
+//         }
+//     ]),
+//     addGalleryImages
+// );
+
 adminRouter.route("/view/gallery").get(verifyJWT,authorizeRoles("admin"),viewGalleryImages)
 
 adminRouter.route("/view/gallery/:id").get(verifyJWT,authorizeRoles("admin"),viewGalleryImage)
