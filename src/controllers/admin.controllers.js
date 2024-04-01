@@ -9,8 +9,8 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 
 // get all users , get a user detail
 const getAllUser = asyncHandler(async(req,res)=>{
-    const user = await User.find().select("-password");
-    console.log("USers in db",user)
+    const user = await User.find({role:{ $nin: ["superadmin"] }}).select("-password");
+    // console.log("USers in db",user)
     if(user.length === 0){
         throw new ApiError(404,"User not found")
     }
@@ -23,10 +23,13 @@ const getAllUser = asyncHandler(async(req,res)=>{
 
 
 const getUser = asyncHandler(async(req,res)=>{
-    const user = await User.find( { _id:req.params.id } ).select("-password");
+    const user = await User.findById( { _id:req.params.id } ).select("-password");
     console.log("user found",user)
     if(!user){
         throw new ApiError(404,"USer Not forund")
+    }
+    if(user.role === 'superadmin'){
+        throw new ApiError(401,"You cannot view superadmin")
     }
     return res
     .status(200)
@@ -56,21 +59,29 @@ const makeUserAdmin = asyncHandler(async(req,res)=>{
 
 // delete user
 const deleteUser = asyncHandler(async(req,res)=>{
-    const userToBeDeleted = await User.findById({_id:req.params.id})
-    console.log("userTobe dleeted",userToBeDeleted)
+    const userToBeDeleted = await User.findById(req.params.id);
+    console.log("userToBeDeleted", userToBeDeleted);
+    
     if(!userToBeDeleted){
-        throw new ApiError(400,"User doesnt exist")
+        throw new ApiError(404, "User not found");
     }
-    if(userToBeDeleted.role ==='admin'){
-        throw new ApiError(401,"You cant delete admin")
+    if(userToBeDeleted._id.equals(req.user._id)) {
+        throw new ApiError(401, "You cannot delete your own account");
     }
-    await User.findByIdAndDelete(userToBeDeleted._id)
+    if(req.user.role === "admin" && userToBeDeleted.role === "admin") {
+        throw new ApiError(401, "Only superadmins can delete other admins");
+    }
+    if(userToBeDeleted.role === "superadmin") {
+        throw new ApiError(401, "You cannot delete a superadmin");
+    }
+    await User.findByIdAndDelete(userToBeDeleted._id);
     return res
     .status(200)
     .json(
-        new ApiResponse(200,"User deleted Successfully")
-    )
-})
+        new ApiResponse(200, "User deleted successfully")
+    );
+});
+
 
 // add gallery images , view image , view all images , delete images
 const addGalleryImages = asyncHandler(async(req,res)=>{

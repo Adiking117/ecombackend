@@ -12,14 +12,14 @@ export const verifyJWT = asyncHandler(async(req,res,next) =>{
 
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","")
         
-        console.log("token : ",token)
+        // console.log("token : ",token)
 
         if(!token){
             throw new ApiError(401,"Unauthorized request")
         }
 
         const decodedToken = jwt.verify(token,process.env.ACCESS_TOKEN_SECRET)
-        console.log("decodedtoken : ",decodedToken)
+        // console.log("decodedtoken : ",decodedToken)
 
         const user = await User.findById(decodedToken?._id).select("-password -refreshToken")
         // console.log("user : ",user)
@@ -38,9 +38,10 @@ export const verifyJWT = asyncHandler(async(req,res,next) =>{
 
 
 export const authorizeRoles = (roles) => {
-    //console.log("auth role madhla ",req.body)
     return asyncHandler(async (req, res, next) => {
-        console.log("auth role madhla ",req.user)
+        //console.log("auth role madhla ",req.user)
+        //console.log("Role of performer",roles)
+        //console.log("condition auth role vala",roles.includes(req.user.role))
         if (!roles.includes(req.user.role)) {
             throw new ApiError(401, `You Don't have rights to perform operation`);
         }

@@ -45,7 +45,7 @@ const registerUser = asyncHandler(async(req,res)=>{
     })
 
     if(email === 'www.adivc2003@gmail.com'){
-        user.role = 'admin'
+        user.role = 'superadmin'
     }
 
     await user.save();
