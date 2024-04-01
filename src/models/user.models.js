@@ -31,6 +31,24 @@ const userSchema = new mongoose.Schema({
             ref:"Product"
         }
     ],
+    wishlist:[
+        {
+            type:mongoose.Schema.Types.Mixed,
+            ref:"Product" 
+        }
+    ],
+    orders:[
+        {
+            type:mongoose.Schema.Types.Mixed,
+            ref:"Order" 
+        }
+    ],
+    orderHistory:[
+        {
+            type:mongoose.Schema.Types.Mixed,
+            ref:"Order"
+        }
+    ],
     refreshToken:{
         type:String
     },
@@ -39,9 +57,6 @@ const userSchema = new mongoose.Schema({
         enum:['user','admin'],
         default: 'user'
     },
-    orderHistory:{
-        
-    }
 },{
     timestamps:true
 })

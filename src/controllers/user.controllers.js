@@ -198,13 +198,15 @@ const logoutUser = asyncHandler(async(req,res)=>{
 })
 
 
-// get all products , view a product , add product to cart
+// get all products , get products by category , view product by id 
+// -> add product to cart -> buy product -> order creation
+// -> review & rate a product -> getAllReviewsAndRatings 
+// -> add to wishlist -> view wishlist -> view wishlist items by id -> updateWishlist , clearWishlist
 
-// review a product , rate a product
+// view cart -> view Cart Items -> view cart product by id -> update cart -> addQty , subQty
+// -> delete cart , buy products -> order creation
 
-// view cart , update cart , delete cart , buy products , order creation
-
-// get order history , get a order 
+// get order history -> get order by id 
 
 
 export {

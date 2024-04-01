@@ -13,14 +13,25 @@ const productSchema = new mongoose.Schema({
         type:String,
         required:true
     },
-    rating:{
+    avgRating:{
         type:Number,
-        required:true
+        default:0
     },
-    review:{
-        type:String,
-        required:true
-    },
+    reviews:[
+        {
+            user:{
+                type:mongoose.Schema.Types.ObjectId,
+                ref:"User"
+            },
+            rating:{
+                type:Number,
+                default:0
+            },
+            comment:{
+                type:String
+            },
+        }
+    ],
     image:{
         type:String,
         required:true
@@ -35,7 +46,7 @@ const productSchema = new mongoose.Schema({
     },
     reviewNum:{
         type:Number,
-        required:true
+        default:0
     }
 },{timetsamps:true})
 

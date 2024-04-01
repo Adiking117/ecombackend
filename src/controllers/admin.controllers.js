@@ -143,7 +143,7 @@ const deleteGalleryImage = asyncHandler(async(req,res)=>{
 
 
 
-// add products , update products , delete products , get product reviews
+// add products , view products , view product by id -> update products , delete products , get product reviews
 
 // get all orders , get a order , complete order
 
