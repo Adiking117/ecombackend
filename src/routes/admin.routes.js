@@ -10,7 +10,7 @@ adminRouter.route("/view/users").get(verifyJWT,authorizeRoles("admin"),getAllUse
 
 adminRouter.route("/view/users/:id").get(verifyJWT,authorizeRoles("admin"),getUser);
 
-adminRouter.route("/view/users/:id/makeadmin").patch(verifyJWT,authorizeRoles("admin"),makeUserAdmin)
+adminRouter.route("/view/users/:id/makeadmin").put(verifyJWT,authorizeRoles("admin"),makeUserAdmin)
 
 adminRouter.route("/view/users/:id/delete").delete(verifyJWT,authorizeRoles("admin"),deleteUser)
 
