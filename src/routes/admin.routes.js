@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { upload } from "../middlewares/multer.middlewares.js"
-import { addGalleryImages, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages } from "../controllers/admin.controllers.js";
+import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews } from "../controllers/admin.controllers.js";
 
 const adminRouter = Router();
 
@@ -50,6 +50,39 @@ adminRouter.route("/view/gallery/:id/deleteImage").delete(verifyJWT,authorizeRol
 
 
 // products
+adminRouter.route("/view/products/addProducts").post(
+    verifyJWT,
+    authorizeRoles(["admin","superadmin"]),
+    upload.fields([
+        {
+            name:"image",
+            maxCount: 1
+        }
+    ]),
+    addProducts
+)
+
+adminRouter.route("/view/products").get(verifyJWT,authorizeRoles(["admin","superadmin"]),viewAllProducts)
+
+adminRouter.route("/view/products/:id").get(verifyJWT,authorizeRoles(["admin","superadmin"]),viewProduct)
+
+adminRouter.route("/view/products/:id/update/details").put(verifyJWT,authorizeRoles(["admin","superadmin"]),updateProductDetails)
+
+adminRouter.route("/view/products/:id/update/image").put(
+    verifyJWT,
+    authorizeRoles(["admin","superadmin"]),
+    upload.fields([
+        {
+            name:"image",
+            maxCount: 1
+        }
+    ]),
+    updateProductImage
+)
+
+adminRouter.route("/view/products/:id/deleteProduct").delete(verifyJWT,authorizeRoles(["admin","superadmin"]),deleteProduct)
+
+adminRouter.route("/view/products/:id/reviews").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getProductReviews)
 
 
 // order

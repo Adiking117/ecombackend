@@ -123,7 +123,8 @@ const viewGalleryImages = asyncHandler(async(req,res)=>{
 
 
 const viewGalleryImage = asyncHandler(async(req,res)=>{
-    const image = await Gallery.find({_id:req.params.id})
+    const image = await Gallery.findById(req.params.id)
+    // console.log("image by id",image)
     if(!image){
         throw new ApiError(401,"Image cant be found")
     }
@@ -136,10 +137,9 @@ const viewGalleryImage = asyncHandler(async(req,res)=>{
 
 
 const deleteGalleryImage = asyncHandler(async(req,res)=>{
-    const imageToBeDeleted = await Gallery.findById({ _id:req.params.id })
+    const imageToBeDeleted = await Gallery.findById(req.params.id)
 
     console.log("type of to be deleted",typeof(imageToBeDeleted))
-
     console.log("image to be deleted",imageToBeDeleted)
     if(!imageToBeDeleted){
         throw new ApiError(404,"Image Not found")
@@ -155,6 +155,153 @@ const deleteGalleryImage = asyncHandler(async(req,res)=>{
 
 
 // add products , view products , view product by id -> update products , delete products , get product reviews
+const addProducts = asyncHandler(async(req,res)=>{
+    const { name,price,description,stock,category } = req.body;
+    if(!name || !price || !description || !stock || !category){
+        throw new ApiError(401,"Fill All the details")
+    }
+    const imageLocalPath = req.files?.image[0]?.path
+    if(!imageLocalPath){
+        throw new ApiError(401,"Image not found")
+    }
+    const image = await uploadOnCloudinary(imageLocalPath)
+    if(!image){
+        throw new ApiError(401,"Image required")
+    }
+
+    const product = await Product.create({
+        name,
+        price,
+        description,
+        image:image.url,
+        stock,
+        category,
+    })
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,product,"Product Added Successsfully")
+    )
+})
+
+
+const viewAllProducts = asyncHandler(async(req,res)=>{
+    const products = await Product.find();
+    if(products.length===0){
+        throw new ApiError(401,"No products Found")
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,products,"All products fetched Successfully")
+    )
+})
+
+
+const viewProduct = asyncHandler(async(req,res)=>{
+    const product = await Product.findById( {_id:req.params.id })
+    if(!product){
+        throw new ApiError(401,"No product Found")
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,product,"Product fetched Successfully")
+    )
+})
+
+
+const updateProductDetails = asyncHandler(async(req,res)=>{
+    const { name,price,description,stock,category } = req.body
+    const {id} = req.params
+    //console.log("req.body",req.body,"req.params.id",req.params.id)
+    const updateFields = {};
+    if (name) updateFields.name = name;
+    if (price) updateFields.price = price;
+    if (description) updateFields.description = description;
+    if (stock) updateFields.stock = stock;
+    if (category) updateFields.category = category;
+
+    const productToBeUpdated = await Product.findByIdAndUpdate(
+        id,
+        {
+            $set:updateFields
+        },
+        {
+            new:true
+        }
+    )
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,productToBeUpdated,"Product Details updated successfully")
+    )
+})
+
+
+const updateProductImage = asyncHandler(async(req,res)=>{
+    const imageLocalPath = req.files?.image[0].path;
+    const {id} = req.params
+    // console.log("req.files",req.files.image[0].path)
+    // console.log("id of product",id)
+    if(!imageLocalPath){
+        throw new ApiError(401,"Image not found")
+    }
+    const updatedImage = await uploadOnCloudinary(imageLocalPath)
+    if(!updatedImage.url){
+        throw new ApiError(500,"Image cannot be uplaoded")
+    }
+    // console.log("updated image",updatedImage)
+    const produtImageToBeUpdated = await Product.findByIdAndUpdate(
+        id,
+        {
+            $set:{
+                image:updatedImage.url
+            }
+        },
+        {
+            new:true
+        }
+    )
+    
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,produtImageToBeUpdated,"Product Image Updated successfully")
+    )
+})
+
+
+const deleteProduct = asyncHandler(async(req,res)=>{
+    const productToBeDeleted = await Product.findById(req.params.id)
+    if(!productToBeDeleted){
+        throw new ApiError(401,"Product Not found")
+    }
+    await Product.findByIdAndDelete(productToBeDeleted._id)
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,"Product Deleted Succeessfully")
+    )
+})
+
+
+const getProductReviews = asyncHandler(async(req,res)=>{
+    const productReviews = await Product.findById(req.params.id)
+    if(!productReviews){
+        throw new ApiError(401,"Product not found")
+    }
+    const allReviews = productReviews.reviews;
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,allReviews,"Reviews fetched successfully")
+    )
+})
+
 
 // get all orders , get a order , complete order
 
@@ -163,10 +310,17 @@ const deleteGalleryImage = asyncHandler(async(req,res)=>{
 export{
     getAllUser,
     getUser,
+    makeUserAdmin,
+    deleteUser,
     addGalleryImages,
     deleteGalleryImage,
     viewGalleryImage,
     viewGalleryImages,
-    makeUserAdmin,
-    deleteUser
+    addProducts,
+    viewAllProducts,
+    viewProduct,
+    updateProductDetails,
+    updateProductImage,
+    deleteProduct,
+    getProductReviews
 }

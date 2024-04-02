@@ -42,6 +42,7 @@ const productSchema = new mongoose.Schema({
     },
     category:{
         type:String,
+        enum:["Eatables","Equipments","Accessories"],
         required:true
     },
     reviewNum:{
