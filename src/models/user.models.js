@@ -1,6 +1,7 @@
 import mongoose from 'mongoose'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import { Product } from './products.models.js'
 
 const userSchema = new mongoose.Schema({
     userName:{
@@ -27,8 +28,14 @@ const userSchema = new mongoose.Schema({
     },
     cart:[
         {
-            type:mongoose.Schema.Types.Mixed,
-            ref:"Product"
+            product: {
+                type: mongoose.Schema.Types.Mixed,
+                ref: "Product"
+            },
+            quantity: {
+                type: Number,
+                default: 1
+            }
         }
     ],
     wishlist:[
@@ -97,6 +104,53 @@ userSchema.methods.generateRefreshToken = function(){
             expiresIn: process.env.REFRESH_TOKEN_EXPIRY
         }
     )
+}
+
+userSchema.methods.addToCart = async function(productId) {
+    const productToAdd = await Product.findById(productId);
+
+    const itemExistOrNot = this.cart.findIndex((item) => {
+        return item.product._id.toString() === productId
+    });
+    if (itemExistOrNot !== -1) {
+        this.cart[itemExistOrNot].quantity++;
+    } else {
+        this.cart.push({ product: productToAdd.toObject(), quantity: 1 });
+    }
+    await this.save();
+};
+
+userSchema.methods.addQty = async function(productId) {
+    const itemExistOrNot = this.cart.findIndex((item) => {
+        return item.product._id.toString() === productId
+    });
+    if (itemExistOrNot !== -1) {
+        this.cart[itemExistOrNot].quantity++;
+    }
+    await this.save();
+};
+
+userSchema.methods.subQty = async function(productId){
+    const itemExistOrNot = this.cart.findIndex((item)=>{
+        return item.product._id.toString() === productId
+    });
+    if(itemExistOrNot !== -1){
+        this.cart[itemExistOrNot].quantity--;
+        if(this.cart[itemExistOrNot].quantity <= 0){
+            this.cart.splice(itemExistOrNot,1)
+        }
+    }
+    await this.save();
+}
+
+userSchema.methods.deleteFromCart = async function(productId){
+    const itemExistOrNot = this.cart.findIndex((item)=>{
+        return item.product._id.toString() === productId
+    });
+    if(itemExistOrNot !== -1){
+        this.cart.splice(itemExistOrNot,1)
+    }
+    await this.save();
 }
 
 

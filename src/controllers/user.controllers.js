@@ -1,5 +1,6 @@
 import { User } from "../models/user.models.js"
 import { Profile } from "../models/profile.models.js"
+import { Product } from "../models/products.models.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
@@ -152,7 +153,7 @@ const updateUserProfile = asyncHandler(async(req,res)=>{
 
 const getDetails = asyncHandler(async(req,res)=>{
     
-    console.log("get details triggred")
+    //console.log("get details triggred")
     const {userName} = req.user;
     const user = await User.findOne({ userName })
     if(!user){
@@ -198,13 +199,255 @@ const logoutUser = asyncHandler(async(req,res)=>{
 })
 
 
-// get all products , get products by category , view product by id 
-// -> add product to cart -> buy product -> order creation
-// -> review & rate a product -> getAllReviewsAndRatings 
+// -> buy cart products -> order creation
 // -> add to wishlist -> view wishlist -> view wishlist items by id -> updateWishlist , clearWishlist
 
-// view cart -> view Cart Items -> view cart product by id -> update cart -> addQty , subQty
-// -> delete cart , buy products -> order creation
+// Products
+const getAllProducts = asyncHandler(async(req,res)=>{
+    const products = await Product.find()
+    if(products.length===0){
+        throw new ApiError(401,"No products to show")
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,products,"All Products fetched successfully")
+    )
+})
+
+const getProduct = asyncHandler(async(req,res)=>{
+    const product = await Product.findById(req.params.id)
+    if(!product){
+        throw new ApiError(404,product,"Product not found")
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,product,"Product fetched Successfully")
+    )
+})
+
+const getProductsByCategory = asyncHandler(async(req,res)=>{
+    console.log(req.query)
+    const products = await Product.find({ category:req.query.category })
+    if(products.length===0){
+        throw new ApiError(401,"Products not found")
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,products,"Products filtered successfully")
+    )
+})
+
+
+// Reviews
+const rateAndReviewProduct = asyncHandler(async (req, res) => {
+    const { rating, comment } = req.body;
+    const productId = req.params.id;
+    const user = req.user;
+
+    const productToBeReviewed = await Product.findById(productId);
+    if (!productToBeReviewed) {
+        throw new ApiError(404, "Product Not found");
+    }
+
+    const newReview = {
+        user: user._id,
+        rating,
+        comment
+    };
+
+    productToBeReviewed.reviews.push(newReview);
+
+    const totalRatings = productToBeReviewed.reviews.length;
+    const totalRatingsSum = productToBeReviewed.reviews.reduce((sum, review) => {
+        return sum + review.rating;
+    }, 0);
+    productToBeReviewed.avgRating = totalRatings !== 0 ? totalRatingsSum / totalRatings : 0;
+
+    await productToBeReviewed.save();
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, productToBeReviewed.reviews , "Review added successfully")
+    );
+});
+
+const editProductReview = asyncHandler(async(req,res)=>{
+    const { rating, comment } = req.body;
+    const { productId, reviewId } = req.params;
+    const user = req.user;
+
+    const productReviewToBeEdited = await Product.findById(productId);
+    if (!productReviewToBeEdited) {
+        throw new ApiError(404, "Product Not found");
+    }
+    console.log("productReviewToBeEdited",productReviewToBeEdited.reviews)
+
+    const reviewIndex = productReviewToBeEdited.reviews.findIndex((review) => {
+        return review._id.toString() === reviewId && review.user.toString() === user._id.toString();
+    });
+    if (reviewIndex === -1) {
+        throw new ApiError(404, "Review Not found");
+    }
+
+    if (rating !== undefined) {
+        productReviewToBeEdited.reviews[reviewIndex].rating = rating;
+    }
+    if (comment !== undefined) {
+        productReviewToBeEdited.reviews[reviewIndex].comment = comment;
+    }
+
+    const totalRatings = productReviewToBeEdited.reviews.length;
+    const totalRatingsSum = productReviewToBeEdited.reviews.reduce((sum, review) => {
+        return sum + review.rating;
+    }, 0);
+    productReviewToBeEdited.avgRating = totalRatings !== 0 ? totalRatingsSum / totalRatings : 0;
+
+    await productReviewToBeEdited.save();
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, productReviewToBeEdited.reviews , "Review edited successfully")
+    );
+});
+
+const deleteProductReveiw = asyncHandler(async(req,res)=>{
+    const {productId,reviewId} = req.params;
+    const user = req.user
+
+    const productReviewToBeDeleted = await Product.findById(productId);
+    if (!productReviewToBeDeleted) {
+        throw new ApiError(404, "Product Not found");
+    }
+
+    const reviewIndex = productReviewToBeDeleted.reviews.findIndex((review) => {
+        return review._id.toString() === reviewId && review.user.toString() === user._id.toString()
+    });
+    if (reviewIndex === -1) {
+        throw new ApiError(404, "Review Not found");
+    }
+
+    productReviewToBeDeleted.reviews.splice(reviewIndex, 1);
+
+    const totalRatings = productReviewToBeDeleted.reviews.length;
+    const totalRatingsSum = productReviewToBeDeleted.reviews.reduce((sum, review) => {
+        return sum + review.rating;
+    }, 0);
+    productReviewToBeDeleted.avgRating = totalRatings !== 0 ? totalRatingsSum / totalRatings : 0;
+
+    await productReviewToBeDeleted.save();
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, {} , "Review deleted successfully")
+    );
+})
+
+
+
+// Cart
+const addItemsToCart = asyncHandler(async(req,res)=>{
+    const productid = req.params.id;
+    const userid = req.user._id;
+    // console.log(req.params,"   ",req.user)
+
+    const product = await Product.findById(productid);
+    if(!product){
+        throw new ApiError(404,"Product not found")
+    }
+
+    const user = await User.findById(userid)
+    if(!user){
+        throw new ApiError(404,"User not found")
+    }
+
+    if(!(product.stock > 0)){
+        throw new ApiError(401,"Product out of stock")
+    }
+
+    await user.addToCart(productid);
+
+    await user.save();
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user.cart.length,"Product added to cart successfully")
+    )
+})
+
+const viewCartItems = asyncHandler(async(req,res)=>{
+    const user = await User.findById(req.user.id)
+    if(!user){
+        throw new ApiError(404,"No user found")
+    }
+    const cartItems = user.cart
+    // console.log(cartItems)
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,cartItems,"Cart Products fetched successfully")
+    )
+})
+
+const addCartItemQty = asyncHandler(async(req,res)=>{
+    const productid = req.params.id
+    if(!productid){
+        throw new ApiError(404,"Product Not Found")
+    }
+    const user = req.user
+    await user.addQty(productid);
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user.cart,"Quantity added successfully")
+    )
+})
+
+const subCartItemQty = asyncHandler(async(req,res)=>{
+    const productid = req.params.id
+    if(!productid){
+        throw new ApiError(404,"Product Not found")
+    }
+    const user = req.user
+    await user.subQty(productid)
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user.cart,"Quantity removed Successfully")
+    )
+})
+
+const deleteCartItem = asyncHandler(async(req,res)=>{
+    const productid = req.params.id
+    if(!productid){
+        throw new ApiError(404,"Product Not found")
+    }
+    const user = req.user
+    await user.deleteFromCart(productid)
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user.cart,"Item removed from Cart Successfully")
+    )
+})
+
+const deleteCart = asyncHandler(async(req,res)=>{
+    const user = req.user
+    user.cart = []
+    await user.save();
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user.cart,"Cart Emptied Successfully")
+    )
+})
+
 
 // get order history -> get order by id 
 
@@ -214,5 +457,17 @@ export {
     loginUser,
     updateUserProfile,
     getDetails,
-    logoutUser
+    logoutUser,
+    getAllProducts,
+    getProduct,
+    getProductsByCategory,
+    addItemsToCart,
+    viewCartItems,
+    addCartItemQty,
+    subCartItemQty,
+    deleteCartItem,
+    deleteCart,
+    rateAndReviewProduct,
+    editProductReview,
+    deleteProductReveiw
 }

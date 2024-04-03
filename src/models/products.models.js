@@ -45,10 +45,6 @@ const productSchema = new mongoose.Schema({
         enum:["Eatables","Equipments","Accessories"],
         required:true
     },
-    reviewNum:{
-        type:Number,
-        default:0
-    }
 },{timetsamps:true})
 
 export const Product = mongoose.model("Product",productSchema)
