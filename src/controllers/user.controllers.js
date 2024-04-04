@@ -199,9 +199,6 @@ const logoutUser = asyncHandler(async(req,res)=>{
 })
 
 
-// -> buy cart products -> order creation
-// -> add to wishlist -> view wishlist -> view wishlist items by id -> updateWishlist , clearWishlist
-
 // Products
 const getAllProducts = asyncHandler(async(req,res)=>{
     const products = await Product.find()
@@ -353,7 +350,7 @@ const deleteProductReveiw = asyncHandler(async(req,res)=>{
 // Cart
 const addItemsToCart = asyncHandler(async(req,res)=>{
     const productid = req.params.id;
-    const userid = req.user._id;
+    const userId = req.user._id;
     // console.log(req.params,"   ",req.user)
 
     const product = await Product.findById(productid);
@@ -361,10 +358,7 @@ const addItemsToCart = asyncHandler(async(req,res)=>{
         throw new ApiError(404,"Product not found")
     }
 
-    const user = await User.findById(userid)
-    if(!user){
-        throw new ApiError(404,"User not found")
-    }
+    const user = await User.findById(userId)
 
     if(!(product.stock > 0)){
         throw new ApiError(401,"Product out of stock")
@@ -449,6 +443,91 @@ const deleteCart = asyncHandler(async(req,res)=>{
 })
 
 
+// Wishlist
+const addToWishlist = asyncHandler(async(req,res)=>{
+    const productId = req.params.id
+    const userId = req.user._id
+
+    const productToBeWishlisted = await Product.findById(productId)
+    if(!productToBeWishlisted){
+        throw new ApiError(404,"Product not found")
+    }
+
+    const user = await User.findById(userId)
+    if(!user){
+        throw new ApiError(404,"User not found")
+    }
+
+    const isProductInWishlist = user.wishlist.some((item) => {
+        return item._id.toString() === productId
+    });
+    if(!isProductInWishlist){
+        user.wishlist.push(productToBeWishlisted.toObject());
+        await user.save();
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user.wishlist,"Product added to wishlist")
+    )
+})
+
+const viewWishlist = asyncHandler(async(req,res)=>{
+    const userId = req.user.id
+    const user = await User.findById(userId)
+    if(!user){
+        throw new ApiError(404,"User doesnt exist")
+    }
+    
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user.wishlist,"User Wishlist fetched successfully")
+    )
+})
+
+const deleteWishlistProduct = asyncHandler(async(req,res)=>{
+    const productId = req.params.id
+    const userId = req.user._id
+
+    const productToBeRemoveFromWishlist = await Product.findById(productId)
+    if(!productToBeRemoveFromWishlist){
+        throw new ApiError(404,"Product not found")
+    }
+
+    const user = await User.findById(userId)
+    if(!user){
+        throw new ApiError(404,"User not found")
+    }
+
+    const isProductInWishlist = user.wishlist.some((item) => {
+        return item._id.toString() === productId
+    });
+    if(isProductInWishlist){
+        user.wishlist.pop(productToBeRemoveFromWishlist.toObject());
+        await user.save();
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user.wishlist,"Product removed from wishlist")
+    )
+})
+
+const deleteWishlist = asyncHandler(async(req,res)=>{
+    const user = req.user
+    user.wishlist = []
+    await user.save();
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user.wishlist,"Wishlist is Emtpy")
+    )
+})
+
+// -> buy cart products -> order creation
 // get order history -> get order by id 
 
 
@@ -469,5 +548,9 @@ export {
     deleteCart,
     rateAndReviewProduct,
     editProductReview,
-    deleteProductReveiw
+    deleteProductReveiw,
+    addToWishlist,
+    viewWishlist,
+    deleteWishlistProduct,
+    deleteWishlist
 }
