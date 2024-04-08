@@ -67,4 +67,6 @@ userRouter.route("/view/wishlist/:id/removeItem").put(verifyJWT,deleteWishlistPr
 
 userRouter.route("/view/wishlist/deleteWishlist").put(verifyJWT,deleteWishlist)
 
+userRouter.route("/view/wishlist/:id/moveToCart").put(verifyJWT,addItemsToCart)
+
 export default userRouter

@@ -364,6 +364,13 @@ const addItemsToCart = asyncHandler(async(req,res)=>{
         throw new ApiError(401,"Product out of stock")
     }
 
+    const isProductInWishlist = user.wishlist.some((item) => {
+        return item._id.toString() === productid
+    });
+    if(isProductInWishlist){
+        user.wishlist = user.wishlist.filter((item) => item._id.toString() !== productid);
+    }
+
     await user.addToCart(productid);
 
     await user.save();
@@ -527,9 +534,32 @@ const deleteWishlist = asyncHandler(async(req,res)=>{
     )
 })
 
-// -> buy cart products -> order creation
-// get order history -> get order by id 
 
+// -> buy cart products -> order creation
+const buyCartProducts = asyncHandler(async(req,res)=>{
+
+})
+
+const buyProduct = asyncHandler(async(req,res)=>{
+
+})
+
+const doPayment = asyncHandler(async(req,res)=>{
+
+})
+
+// get order history -> get order by id 
+const getMyOrders = asyncHandler(async(req,res)=>{
+
+})
+
+const getUserOrder = asyncHandler(async(req,res)=>{
+
+})
+
+const getOrderHistory = asyncHandler(async(req,res)=>{
+
+})
 
 export {
     registerUser,
@@ -552,5 +582,11 @@ export {
     addToWishlist,
     viewWishlist,
     deleteWishlistProduct,
-    deleteWishlist
+    deleteWishlist,
+    buyCartProducts,
+    buyProduct,
+    doPayment,
+    getMyOrders,
+    getUserOrder,
+    getOrderHistory
 }

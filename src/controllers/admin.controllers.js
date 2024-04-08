@@ -6,7 +6,6 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { uploadOnCloudinary,deleteFromCloudinary } from "../utils/cloudinary.js"
-import { v2 as cloudinary } from 'cloudinary';
 
 
 // get all users , get a user detail
@@ -300,7 +299,7 @@ const deleteProduct = asyncHandler(async(req,res)=>{
     if(!productToBeDeleted){
         throw new ApiError(401,"Product Not found")
     }
-    
+
     await deleteFromCloudinary(productToBeDeleted.image);
 
     await Product.findByIdAndDelete(productToBeDeleted._id)
@@ -328,7 +327,17 @@ const getProductReviews = asyncHandler(async(req,res)=>{
 
 
 // get all orders , get a order , complete order
+const getAllOrders = asyncHandler(async(req,res)=>{
 
+})
+
+const getOrder = asyncHandler(async(req,res)=>{
+
+})
+
+const completeOrder = asyncHandler(async(req,res)=>{
+
+})
 
 
 export{
@@ -347,5 +356,8 @@ export{
     updateProductDetails,
     updateProductImage,
     deleteProduct,
-    getProductReviews
+    getProductReviews,
+    getAllOrders,
+    getOrder,
+    completeOrder
 }
