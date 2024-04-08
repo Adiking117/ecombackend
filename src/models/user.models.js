@@ -64,6 +64,12 @@ const userSchema = new mongoose.Schema({
         enum:['user','admin','superadmin'],
         default: 'user'
     },
+    notications:[
+        {
+            type:mongoose.Schema.Types.Mixed,
+            ref:"Notification"
+        }
+    ]
 },{
     timestamps:true
 })

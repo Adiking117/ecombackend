@@ -300,6 +300,9 @@ const deleteProduct = asyncHandler(async(req,res)=>{
     if(!productToBeDeleted){
         throw new ApiError(401,"Product Not found")
     }
+    
+    await deleteFromCloudinary(productToBeDeleted.image);
+
     await Product.findByIdAndDelete(productToBeDeleted._id)
 
     return res

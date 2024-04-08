@@ -7,8 +7,14 @@ const orderSchema = new mongoose.Schema({
     },
     products:[
         {
-            type:mongoose.Schema.Types.Mixed,
-            ref:"Product" 
+            product: {
+                type: mongoose.Schema.Types.Mixed,
+                ref: "Product"
+            },
+            quantity: {
+                type: Number,
+                default: 1
+            }
         }
     ],
     totalProductPrice:{
