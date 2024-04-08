@@ -40,8 +40,8 @@ const getUser = asyncHandler(async(req,res)=>{
 
 // make another user a admin 
 const makeUserAdmin = asyncHandler(async(req,res)=>{
-    const userTobeAdmin = await User.findById({ _id: req.params.id }).select("-password")
-    //console.log("userTobeAdmin",userTobeAdmin)
+    const userTobeAdmin = await User.findById(req.params.id).select("-password")
+    console.log("userTobeAdmin",userTobeAdmin)
     if(!userTobeAdmin){
         throw new ApiError(400,"USer doesnt exist")
     }
@@ -55,6 +55,23 @@ const makeUserAdmin = asyncHandler(async(req,res)=>{
         new ApiResponse(200,userTobeAdmin,"Admin updated successfully")
     )
 
+})
+
+
+const makeAdminUser = asyncHandler(async(req,res)=>{
+    const adminToBeUser = await User.findById(req.params.id).select("-password")
+    if(!adminToBeUser){
+        throw new ApiError(400,"USer doesnt exist")
+    }
+    // await userTobeAdmin.role = 'admin'
+    adminToBeUser.role = 'user'
+    adminToBeUser.save();
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,adminToBeUser,"Admin updated successfully")
+    )
 })
 
 // delete user
@@ -311,6 +328,7 @@ export{
     getAllUser,
     getUser,
     makeUserAdmin,
+    makeAdminUser,
     deleteUser,
     addGalleryImages,
     deleteGalleryImage,
