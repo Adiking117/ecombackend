@@ -19,29 +19,29 @@ adminRouter.route("/view/users/:id/delete").delete(verifyJWT,authorizeRoles(["ad
 
 
 // // gallery
-// adminRouter.route("/view/gallery/addImage").post(
-//         verifyJWT,
-//         authorizeRoles(["admin","superadmin"]),
-//         upload.fields([
-//             {
-//                 name:"image",
-//                 maxCount: 1
-//             }
-//         ]),
-//         addGalleryImages
-// );
+adminRouter.route("/view/gallery/addImage").post(
+        verifyJWT,
+        authorizeRoles(["admin","superadmin"]),
+        upload.fields([
+            {
+                name:"image",
+                maxCount: 1
+            }
+        ]),
+        addGalleryImages
+);
 
 
 // test route 
-adminRouter.route("/view/gallery/addImage").post(
-    upload.fields([
-        {
-            name:"image",
-            maxCount: 1
-        }
-    ]),
-    addGalleryImages
-);
+// adminRouter.route("/view/gallery/addImage").post(
+//     upload.fields([
+//         {
+//             name:"image",
+//             maxCount: 1
+//         }
+//     ]),
+//     addGalleryImages
+// );
 
 adminRouter.route("/view/gallery").get(verifyJWT,authorizeRoles(["admin","superadmin"]),viewGalleryImages)
 

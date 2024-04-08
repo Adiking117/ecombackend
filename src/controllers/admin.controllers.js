@@ -5,7 +5,9 @@ import { Product } from "../models/products.models.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
-import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { uploadOnCloudinary,deleteFromCloudinary } from "../utils/cloudinary.js"
+import { v2 as cloudinary } from 'cloudinary';
+
 
 // get all users , get a user detail
 const getAllUser = asyncHandler(async(req,res)=>{
@@ -161,6 +163,8 @@ const deleteGalleryImage = asyncHandler(async(req,res)=>{
     if(!imageToBeDeleted){
         throw new ApiError(404,"Image Not found")
     }
+    await deleteFromCloudinary(imageToBeDeleted.imgurl);
+
     await Gallery.findByIdAndDelete(imageToBeDeleted._id)
     return res
     .status(200)
