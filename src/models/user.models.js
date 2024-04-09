@@ -64,12 +64,20 @@ const userSchema = new mongoose.Schema({
         enum:['user','admin','superadmin'],
         default: 'user'
     },
-    notications:[
+    notifications:[
         {
             type:mongoose.Schema.Types.Mixed,
             ref:"Notification"
         }
-    ]
+    ],
+    shippingInfo:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Shipping"
+    },
+    userProfile:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Profile"
+    }
 },{
     timestamps:true
 })
@@ -153,8 +161,20 @@ userSchema.methods.deleteFromCart = async function(productId){
     const itemExistOrNot = this.cart.findIndex((item)=>{
         return item.product._id.toString() === productId
     });
+    console.log("itemexist",itemExistOrNot)
     if(itemExistOrNot !== -1){
         this.cart.splice(itemExistOrNot,1)
+    }
+    await this.save();
+}
+
+userSchema.methods.deleteFromWishlist = async function(productId){
+    const itemExistOrNot = this.wishlist.findIndex((item)=>{
+        return item.product._id.toString() === productId
+    });
+    console.log("itemexist",itemExistOrNot)
+    if(itemExistOrNot !== -1){
+        this.wishlist.splice(itemExistOrNot,1)
     }
     await this.save();
 }

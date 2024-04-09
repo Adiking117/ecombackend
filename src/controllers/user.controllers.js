@@ -5,6 +5,9 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { Order } from "../models/orders.models.js"
+import { Shipping } from "../models/shipping.models.js"
+import { Notification } from "../models/notifications.models.js"
 
 
 const generateUserAccessRefreshToken = async function(user_id){
@@ -508,13 +511,7 @@ const deleteWishlistProduct = asyncHandler(async(req,res)=>{
         throw new ApiError(404,"User not found")
     }
 
-    const isProductInWishlist = user.wishlist.some((item) => {
-        return item._id.toString() === productId
-    });
-    if(isProductInWishlist){
-        user.wishlist.pop(productToBeRemoveFromWishlist.toObject());
-        await user.save();
-    }
+    await user.deleteFromWishlist(productId)
 
     return res
     .status(200)
@@ -537,6 +534,62 @@ const deleteWishlist = asyncHandler(async(req,res)=>{
 
 // -> buy cart products -> order creation
 const buyCartProducts = asyncHandler(async(req,res)=>{
+    const user = await User.findById(req.user._id);
+    console.log("user" ,user)
+    let orderItems = [];
+    let tax = 0.18;
+    let totalPrice = 0;
+    for(const item of user.cart){
+        const productToBeOrdered = await Product.findById(item.product._id)
+        if(!productToBeOrdered){
+            throw new ApiError(401,"Product not found")
+        }
+        const {name,image,price} = productToBeOrdered;
+        const singleOrderItem = {
+            name:name,
+            image:image,
+            price:price,
+            product:productToBeOrdered._id
+        }
+        //orderItems = [...orderItems,singleOrderItem];
+        orderItems.push(singleOrderItem)
+        productToBeOrdered.stock -= item.quantity;
+        totalPrice += (price*item.quantity);
+        productToBeOrdered.save();
+    }
+    let subtotalPrice = totalPrice + (totalPrice*tax);
+    const {paymentMethod} = req.body;
+
+    //const shippingInfo = await Shipping.findById(user.shippingInfo._id)
+
+    const order = await Order.create({
+        user:req.user._id,
+        orderItems:orderItems,
+        totalProductPrice:totalPrice,
+        subtotalPrice:subtotalPrice,
+        paymentMethod:paymentMethod,
+        //shippingInfo:shippingInfo,
+    })
+
+    if(!order){
+        throw new ApiError(500,"Order not successfull")
+    }
+
+    user.orders.push(order)
+    user.cart = [];
+    // const notification = new Notification({ user: user._id, message: "Order Placed Successfully" });
+    const notification = await Notification.create({
+        user:user._id,
+        message: "Order Placed Successfully"
+    })
+    user.notifications.push(notification);
+    await user.save();
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,order,"Order created successfully")
+    )
 
 })
 
