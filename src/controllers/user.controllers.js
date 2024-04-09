@@ -282,8 +282,7 @@ const rateAndReviewProduct = asyncHandler(async (req, res) => {
     const totalRatingsSum = productToBeReviewed.reviews.reduce((sum, review) => {
         return sum + review.rating;
     }, 0);
-    productToBeReviewed.avgRating = totalRatings !== 0 ? totalRatingsSum / totalRatings : 0;
-    productToBeReviewed.avgRating.toFixed(2);
+    productToBeReviewed.avgRating = totalRatings !== 0 ? (totalRatingsSum / totalRatings).toFixed(2) : 0;
 
     await productToBeReviewed.save();
 
@@ -356,8 +355,7 @@ const deleteProductReveiw = asyncHandler(async(req,res)=>{
     const totalRatingsSum = productReviewToBeDeleted.reviews.reduce((sum, review) => {
         return sum + review.rating;
     }, 0);
-    productReviewToBeDeleted.avgRating = totalRatings !== 0 ? totalRatingsSum / totalRatings : 0;
-    productReviewToBeDeleted.avgRating.toFixed(2)
+    productToBeReviewed.avgRating = totalRatings !== 0 ? (totalRatingsSum / totalRatings).toFixed(2) : 0;
 
     await productReviewToBeDeleted.save();
 
