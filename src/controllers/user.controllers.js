@@ -355,7 +355,7 @@ const deleteProductReveiw = asyncHandler(async(req,res)=>{
     const totalRatingsSum = productReviewToBeDeleted.reviews.reduce((sum, review) => {
         return sum + review.rating;
     }, 0);
-    productToBeReviewed.avgRating = totalRatings !== 0 ? (totalRatingsSum / totalRatings).toFixed(2) : 0;
+    productReviewToBeDeleted.avgRating = totalRatings !== 0 ? (totalRatingsSum / totalRatings).toFixed(2) : 0;
 
     await productReviewToBeDeleted.save();
 
