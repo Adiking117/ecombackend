@@ -170,7 +170,7 @@ userSchema.methods.deleteFromCart = async function(productId){
 
 userSchema.methods.deleteFromWishlist = async function(productId){
     const itemExistOrNot = this.wishlist.findIndex((item)=>{
-        return item.product._id.toString() === productId
+        return item._id.toString() === productId
     });
     console.log("itemexist",itemExistOrNot)
     if(itemExistOrNot !== -1){
