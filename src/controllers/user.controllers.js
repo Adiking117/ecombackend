@@ -217,8 +217,17 @@ const getAllProducts = asyncHandler(async(req,res)=>{
 
 const getProduct = asyncHandler(async(req,res)=>{
     const product = await Product.findById(req.params.id)
+    const user = req.user
     if(!product){
         throw new ApiError(404,product,"Product not found")
+    }
+    const itemExistOrNot = user.wishlist.findIndex((item)=>{
+        return item._id.toString() === product._id
+    });
+    product.inWishlist = false
+    //console.log("itemexist",itemExistOrNot)
+    if(itemExistOrNot !== -1){
+        product.inWishlist = true
     }
     return res
     .status(200)
@@ -535,7 +544,7 @@ const deleteWishlist = asyncHandler(async(req,res)=>{
 // -> buy cart products -> order creation
 const buyCartProducts = asyncHandler(async(req,res)=>{
     const user = await User.findById(req.user._id);
-    console.log("user" ,user)
+    // console.log("user" ,user)
     let orderItems = [];
     let tax = 0.18;
     let totalPrice = 0;
@@ -593,12 +602,20 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
 
 })
 
-const buyProduct = asyncHandler(async(req,res)=>{
-
-})
 
 const doPayment = asyncHandler(async(req,res)=>{
-
+    const orderId = req.params.id;
+    const order = await Order.findById(orderId);
+    if(!order){
+        throw new ApiError(404,"Order not found")
+    }
+    order.paymentStatus = 'Done'
+    await order.save();
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,order,"Payment Done successfully")
+    )
 })
 
 // get order history -> get order by id 
@@ -606,9 +623,6 @@ const getMyOrders = asyncHandler(async(req,res)=>{
 
 })
 
-const getUserOrder = asyncHandler(async(req,res)=>{
-
-})
 
 const getOrderHistory = asyncHandler(async(req,res)=>{
 
@@ -637,9 +651,7 @@ export {
     deleteWishlistProduct,
     deleteWishlist,
     buyCartProducts,
-    buyProduct,
     doPayment,
     getMyOrders,
-    getUserOrder,
     getOrderHistory
 }

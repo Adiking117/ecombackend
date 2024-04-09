@@ -161,7 +161,7 @@ userSchema.methods.deleteFromCart = async function(productId){
     const itemExistOrNot = this.cart.findIndex((item)=>{
         return item.product._id.toString() === productId
     });
-    console.log("itemexist",itemExistOrNot)
+    //console.log("itemexist",itemExistOrNot)
     if(itemExistOrNot !== -1){
         this.cart.splice(itemExistOrNot,1)
     }
@@ -172,7 +172,7 @@ userSchema.methods.deleteFromWishlist = async function(productId){
     const itemExistOrNot = this.wishlist.findIndex((item)=>{
         return item._id.toString() === productId
     });
-    console.log("itemexist",itemExistOrNot)
+    //console.log("itemexist",itemExistOrNot)
     if(itemExistOrNot !== -1){
         this.wishlist.splice(itemExistOrNot,1)
     }
