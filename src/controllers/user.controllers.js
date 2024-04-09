@@ -224,15 +224,18 @@ const getProduct = asyncHandler(async(req,res)=>{
     const itemExistOrNot = user.wishlist.findIndex((item)=>{
         return item._id.toString() === product._id
     });
-    product.inWishlist = false
+    let productDetails = {
+        product,
+        inWishlist:false
+    }
     //console.log("itemexist",itemExistOrNot)
     if(itemExistOrNot !== -1){
-        product.inWishlist = true
+        productDetails.inWishlist = true
     }
     return res
     .status(200)
     .json(
-        new ApiResponse(200,product,"Product fetched Successfully")
+        new ApiResponse(200,productDetails,"Product fetched Successfully")
     )
 })
 
