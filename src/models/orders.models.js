@@ -1,21 +1,28 @@
 import mongoose from "mongoose";
 
+const singleOrderItemSchema = new mongoose.Schema({
+    name:{
+        type:String
+    },
+    image:{
+        type:String
+    },
+    price:{
+        type:Number
+    },
+    product:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Product"
+    }
+},{timestamps:true})
+
 const orderSchema = new mongoose.Schema({
     user:{
         type: mongoose.Schema.ObjectId,
         ref:"User"
     },
-    products:[
-        {
-            product: {
-                type: mongoose.Schema.Types.Mixed,
-                ref: "Product"
-            },
-            quantity: {
-                type: Number,
-                default: 1
-            }
-        }
+    orderItems: [
+        singleOrderItemSchema
     ],
     totalProductPrice:{
         type:Number,

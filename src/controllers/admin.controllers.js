@@ -312,18 +312,27 @@ const deleteProduct = asyncHandler(async(req,res)=>{
 })
 
 
-const getProductReviews = asyncHandler(async(req,res)=>{
-    const productReviews = await Product.findById(req.params.id)
-    if(!productReviews){
-        throw new ApiError(401,"Product not found")
+const getProductReviews = asyncHandler(async (req, res) => {
+    const productId = req.params.id;
+    const product = await Product.findById(productId).populate('reviews.user', 'userName firstName lastName');
+    if (!product) {
+        throw new ApiError(404, "Product not found");
     }
-    const allReviews = productReviews.reviews;
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200,allReviews,"Reviews fetched successfully")
-    )
-})
+    const allReviews = product.reviews.map(review => {
+        return {
+            userId: review.user._id,
+            userName: review.user.userName,
+            firstName: review.user.firstName,
+            lastName: review.user.lastName,
+            rating: review.rating,
+            comment: review.comment
+        };
+    });
+    return res.status(200).json(
+        new ApiResponse(200, allReviews, "Reviews fetched successfully")
+    );
+});
+
 
 
 // get all orders , get a order , complete order

@@ -208,10 +208,20 @@ const getAllProducts = asyncHandler(async(req,res)=>{
     if(products.length===0){
         throw new ApiError(401,"No products to show")
     }
+    const user = req.user;
+    const productsWithWishlistStatus = products.map(product => {
+        const isInWishlist = user.wishlist.some((item) =>{
+            return item._id.toString() === product._id.toString()
+        });
+        return {
+            ...product.toObject(),
+            inWishlist: isInWishlist
+        };
+    });
     return res
     .status(200)
     .json(
-        new ApiResponse(200,products,"All Products fetched successfully")
+        new ApiResponse(200,productsWithWishlistStatus,"All Products fetched successfully")
     )
 })
 
@@ -221,17 +231,13 @@ const getProduct = asyncHandler(async(req,res)=>{
     if(!product){
         throw new ApiError(404,product,"Product not found")
     }
-    const itemExistOrNot = user.wishlist.findIndex((item)=>{
-        return item._id.toString() === product._id
+    const isInWishlist = user.wishlist.some((item) =>{
+        return item._id.toString() === product._id.toString()
     });
-    let productDetails = {
+    const productDetails = {
         product,
-        inWishlist:false
-    }
-    //console.log("itemexist",itemExistOrNot)
-    if(itemExistOrNot !== -1){
-        productDetails.inWishlist = true
-    }
+        inWishlist: isInWishlist
+    };
     return res
     .status(200)
     .json(

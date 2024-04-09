@@ -25,7 +25,9 @@ const productSchema = new mongoose.Schema({
             },
             rating:{
                 type:Number,
-                default:0
+                default:0,
+                min:1,
+                max:5
             },
             comment:{
                 type:String
