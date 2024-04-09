@@ -320,6 +320,7 @@ const getProductReviews = asyncHandler(async (req, res) => {
     }
     const allReviews = product.reviews.map(review => {
         return {
+            reveiwId: review._id,
             userId: review.user._id,
             userName: review.user.userName,
             firstName: review.user.firstName,
