@@ -283,6 +283,7 @@ const rateAndReviewProduct = asyncHandler(async (req, res) => {
         return sum + review.rating;
     }, 0);
     productToBeReviewed.avgRating = totalRatings !== 0 ? totalRatingsSum / totalRatings : 0;
+    productToBeReviewed.avgRating.toFixed(2);
 
     await productToBeReviewed.save();
 
@@ -356,6 +357,7 @@ const deleteProductReveiw = asyncHandler(async(req,res)=>{
         return sum + review.rating;
     }, 0);
     productReviewToBeDeleted.avgRating = totalRatings !== 0 ? totalRatingsSum / totalRatings : 0;
+    productReviewToBeDeleted.avgRating.toFixed(2)
 
     await productReviewToBeDeleted.save();
 
@@ -627,14 +629,26 @@ const doPayment = asyncHandler(async(req,res)=>{
     )
 })
 
-// get order history -> get order by id 
-const getMyOrders = asyncHandler(async(req,res)=>{
 
+const getMyOrders = asyncHandler(async(req,res)=>{
+    const user = req.user;
+    const orders = user.orders;
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,orders,"Orders fetched Successfully")
+    )
 })
 
 
 const getOrderHistory = asyncHandler(async(req,res)=>{
-
+    const user = req.user;
+    const orders = user.orderHistory;
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,orders,"Orders fetched Successfully")
+    )
 })
 
 export {

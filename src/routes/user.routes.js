@@ -1,6 +1,6 @@
 import { Router } from "express"
 
-import { registerUser,loginUser, updateUserProfile, logoutUser, getDetails, getAllProducts, getProduct, getProductsByCategory, addItemsToCart, viewCartItems, addCartItemQty, subCartItemQty, deleteCartItem, deleteCart, rateAndReviewProduct, editProductReview, deleteProductReveiw, addToWishlist, viewWishlist, deleteWishlistProduct, deleteWishlist, buyCartProducts, doPayment } from "../controllers/user.controllers.js"
+import { registerUser,loginUser, updateUserProfile, logoutUser, getDetails, getAllProducts, getProduct, getProductsByCategory, addItemsToCart, viewCartItems, addCartItemQty, subCartItemQty, deleteCartItem, deleteCart, rateAndReviewProduct, editProductReview, deleteProductReveiw, addToWishlist, viewWishlist, deleteWishlistProduct, deleteWishlist, buyCartProducts, doPayment, getMyOrders, getOrderHistory } from "../controllers/user.controllers.js"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { getProductReviews, viewGalleryImage, viewGalleryImages } from "../controllers/admin.controllers.js"
 
@@ -74,4 +74,9 @@ userRouter.route("/view/wishlist/:id/moveToCart").put(verifyJWT,addItemsToCart)
 userRouter.route("/buy/products").post(verifyJWT,buyCartProducts)
 
 userRouter.route("/view/orders/:id/pay").put(verifyJWT,doPayment)
+
+userRouter.route("/view/orders").get(verifyJWT,getMyOrders)
+
+userRouter.route("/view/orders/history").get(verifyJWT,getOrderHistory)
+
 export default userRouter
