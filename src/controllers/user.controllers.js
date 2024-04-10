@@ -272,27 +272,32 @@ const logoutUser = asyncHandler(async(req,res)=>{
 
 
 // Products
-const getAllProducts = asyncHandler(async(req,res)=>{
-    const products = await Product.find()
-    if(products.length===0){
-        throw new ApiError(401,"No products to show")
+const getAllProducts = asyncHandler(async(req, res) => {
+    const products = await Product.find();
+    if (products.length === 0) {
+        throw new ApiError(401, "No products to show");
     }
     const user = req.user;
-    const productsWithWishlistStatus = products.map(product => {
-        const isInWishlist = user.wishlist.some((item) =>{
-            return item._id.toString() === product._id.toString()
+    const productsWithStatus = products.map(product => {
+        const isInWishlist = user.wishlist.some((item) => {
+            return item._id.toString() === product._id.toString();
+        });
+        const isInCart = user.cart.some((item) => {
+            return item.productId.toString() === product._id.toString();
         });
         return {
             ...product.toObject(),
-            inWishlist: isInWishlist
+            inWishlist: isInWishlist,
+            inCart: isInCart
         };
     });
     return res
     .status(200)
     .json(
-        new ApiResponse(200,productsWithWishlistStatus,"All Products fetched successfully")
-    )
-})
+        new ApiResponse(200, productsWithStatus, "All Products fetched successfully")
+    );
+});
+
 
 const getProduct = asyncHandler(async(req,res)=>{
     const product = await Product.findById(req.params.id)
@@ -303,9 +308,13 @@ const getProduct = asyncHandler(async(req,res)=>{
     const isInWishlist = user.wishlist.some((item) =>{
         return item._id.toString() === product._id.toString()
     });
+    const isInCart = user.cart.some((item) =>{
+        return item._id.toString() === product._id.toString()
+    });
     const productDetails = {
         product,
-        inWishlist: isInWishlist
+        inWishlist: isInWishlist,
+        inCart: isInCart
     };
     return res
     .status(200)
