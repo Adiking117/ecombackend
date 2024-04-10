@@ -339,30 +339,30 @@ const getProductReviews = asyncHandler(async (req, res) => {
 
 // get all orders , get a order , complete order
 const getAllOrders = asyncHandler(async(req,res)=>{
-    const orders = await Order.find().populate('user');
+    const orders = await Order.find().populate('user', 'firstName lastName');
+    const ordersWithUserDetails = orders.map(order => {
+        return {
+            _id: order._id,
+            order
+        };
+    });
     return res
     .status(200)
     .json(
-        new ApiResponse(200,orders,"Orders fetched successfully")
-    )
-})
+        new ApiResponse(200, ordersWithUserDetails, "Orders fetched successfully")
+    );
+});
+
 
 const getOrder = asyncHandler(async(req,res)=>{
-    const order = await Order.findById(req.params.id).populate('user');
+    const order = await Order.findById(req.params.id).populate('user', 'firstName lastName');
     if(!order){
         throw new ApiError(404,"Order not found")
     }
-    // const userId = order.user
-    // const user = await User.findById(userId)
-    // const userOrder = {
-    //     firstName:user.firstName,
-    //     lastName:user.lastName,
-    //     order
-    // }
     return res
     .status(200)
     .json(
-        new ApiResponse(200,userOrder,"Order fetched succesdfuly")
+        new ApiResponse(200,order,"Order fetched succesdfuly")
     )
 })
 
