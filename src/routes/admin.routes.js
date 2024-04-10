@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { upload } from "../middlewares/multer.middlewares.js"
-import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, getPaymentDoneOrders, getPaymentPendingOrders, getDeliveredOrders, giveOrderDeliveryDays } from "../controllers/admin.controllers.js";
+import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, giveOrderDeliveryDays } from "../controllers/admin.controllers.js";
 
 const adminRouter = Router();
 
@@ -91,12 +91,6 @@ adminRouter.route("/view/products/:id/reviews").get(verifyJWT,authorizeRoles(["a
 adminRouter.route("/view/orders").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getAllOrders)
 
 adminRouter.route("/view/orders/:id").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getOrder)
-
-adminRouter.route("/view/orders/paydone").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getPaymentDoneOrders)
-
-adminRouter.route("/view/orders/paypending").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getPaymentPendingOrders)
-
-adminRouter.route("/view/orders/deldone").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getDeliveredOrders)
 
 adminRouter.route("/view/orders/:id/giveEstimateDays").put(verifyJWT,authorizeRoles(["admin","superadmin"]),giveOrderDeliveryDays)
 

@@ -339,7 +339,7 @@ const getProductReviews = asyncHandler(async (req, res) => {
 
 // get all orders , get a order , complete order
 const getAllOrders = asyncHandler(async(req,res)=>{
-    const orders = await Order.find();
+    const orders = await Order.find().populate('user');
     return res
     .status(200)
     .json(
@@ -348,44 +348,21 @@ const getAllOrders = asyncHandler(async(req,res)=>{
 })
 
 const getOrder = asyncHandler(async(req,res)=>{
-    console.log("Hiii order by id")
-    const order = await Order.findById(req.params.id)
+    const order = await Order.findById(req.params.id).populate('user');
     if(!order){
         throw new ApiError(404,"Order not found")
     }
+    // const userId = order.user
+    // const user = await User.findById(userId)
+    // const userOrder = {
+    //     firstName:user.firstName,
+    //     lastName:user.lastName,
+    //     order
+    // }
     return res
     .status(200)
     .json(
-        new ApiResponse(200,order,"Order fetched succesdfuly")
-    )
-})
-
-const getPaymentDoneOrders = asyncHandler(async(req,res)=>{
-    console.log("Hiii done order")
-    const orders = await Order.find({ paymentStatus:"Done" });
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200,orders,"PAyment Done Orders fetched succesffuly")
-    )
-}) 
-
-const getPaymentPendingOrders = asyncHandler(async(req,res)=>{
-    console.log("hii pending order")
-    const orders = await Order.find({ paymentStatus:"Pending" });
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200,orders,"PAyment Pending Orders fetched succesffuly")
-    )
-})
-
-const getDeliveredOrders = asyncHandler(async(req,res)=>{
-    const orders = await Order.find({ orderStatus:"Delivered" });
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200,orders,"Delivery Done Orders fetched succesffuly")
+        new ApiResponse(200,userOrder,"Order fetched succesdfuly")
     )
 })
 
@@ -437,9 +414,6 @@ export{
     getProductReviews,
     getAllOrders,
     getOrder,
-    getPaymentDoneOrders,
-    getPaymentPendingOrders,
-    getDeliveredOrders,
     giveOrderDeliveryDays,
     completeOrder
 }
