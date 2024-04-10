@@ -654,7 +654,7 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
         totalProductPrice:totalPrice,
         subtotalPrice:subtotalPrice,
         paymentMethod:paymentMethod,
-        shippingInfo:shippingInfo,
+        shippingInfo:{shippingInfo},
     })
 
     if(!order){
