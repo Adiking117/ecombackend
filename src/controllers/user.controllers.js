@@ -157,42 +157,46 @@ const updateUserProfile = asyncHandler(async(req,res)=>{
       }
 })
 
-const updateShippingDetails = asyncHandler(async(req,res)=>{
-    const { address, city , state , country , pincode , phoneNo} = req.body;
-    
+const updateShippingDetails = asyncHandler(async(req, res) => {
+    const { address, city, state, country, pincode, phoneNo } = req.body;
+
     if (!address || !city || !state || !country || !pincode || !phoneNo) {
-      throw new ApiError(400, "All fields are required");
+        throw new ApiError(400, "All fields are required");
     }
-        
-    let shipping = await Shipping.findById(req.user._id);
-        
+
+    let shipping = await Shipping.findOne({ user: req.user._id });
+
     if (!shipping) {
-      shipping = new Shipping({user: req.user._id, address, city , state , country , pincode , phoneNo});
+        shipping = new Shipping({
+            user: req.user._id,
+            address,
+            city,
+            state,
+            country,
+            pincode,
+            phoneNo
+        });
     } else {
-        shipping.address = address,
-        shipping.city = city,
-        shipping.state = state,
-        shipping.country = country,
-        shipping.pincode = pincode,
-        shipping.phoneNo = phoneNo
+        shipping.address = address;
+        shipping.city = city;
+        shipping.state = state;
+        shipping.country = country;
+        shipping.pincode = pincode;
+        shipping.phoneNo = phoneNo;
     }
-    
+
     await shipping.save();
-    const options = {       
-        httpOnly:true,
-        secure:true
-    }
 
-    const user = req.user
-    user.shippingInfo = shipping._id;
+    req.user.shippingInfo = shipping._id;
+    await req.user.save();
 
-    await user.save();
-    
-    return res.status(200)
-    // .cookie("accessToken",accessToken,options)
-    // .cookie("refreshToken",refreshToken,options)
-    .json(new ApiResponse(200, shipping, "Profile updated successfully"));
-})
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, shipping, "Shipping information updated successfully")
+    );
+});
+
 
 const getShippingDetails = asyncHandler(async(req,res)=>{
     const shippingDetails = await Shipping.findOne( {user:req.user._id} )
@@ -657,8 +661,8 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
         throw new ApiError(500,"Order not successfull")
     }
 
-    user.orders.push(order)
-    user.cart = [];
+    //user.orders.push(order)
+    //user.cart = [];
     //const notification = new Notification({ user: user._id, message: "Order Placed Successfully" });
     const notification = await Notification.create({
         user:user._id,
