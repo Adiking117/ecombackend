@@ -11,6 +11,8 @@ import { Order } from "../models/orders.models.js"
 import { UserDetails } from "../models/userDetails.models.js"
 import excel from 'exceljs';
 import { Notification } from "../models/notifications.models.js"
+import * as fs from 'fs';
+
 
 
 // get all users , get a user detail
@@ -434,10 +436,11 @@ const completeOrder = asyncHandler(async(req,res)=>{
     });
     await userDetails.save();
 
-    const workbook = await createExcelWorkbook(user, userProfile, shippingProfile, products);
     const excelFileName = 'user_details.xlsx';
     const excelFilePath = `C:/Users/Aditya/Desktop/Ecomm CLG/backend/public/temp/${excelFileName}`;
-    await workbook.xlsx.writeFile(excelFilePath);
+
+    await appendUserDetailsToExcel(user, userProfile, shippingProfile, products, excelFilePath);
+
 
     const notification = await Notification.create({
         user:user._id,
@@ -460,24 +463,32 @@ const completeOrder = asyncHandler(async(req,res)=>{
     );
 });
 
-const createExcelWorkbook = async (user, userProfile, shippingProfile, products) => {
+const appendUserDetailsToExcel = async (user, userProfile, shippingProfile, products, excelFilePath) => {
     const workbook = new excel.Workbook();
-    const worksheet = workbook.addWorksheet('UserDetails');
-    worksheet.addRow([
-        'First Name',
-        'Last Name',
-        'Email',
-        'Age',
-        'Height',
-        'Weight',
-        'Gender',
-        'Goal',
-        'City',
-        'Country',
-        'Phone',
-        'Product'
-    ]);
-    for(const product of products) {
+    let worksheet;
+    try {
+        await workbook.xlsx.readFile(excelFilePath);
+        worksheet = workbook.getWorksheet('UserDetails');
+    } catch (error) {
+        worksheet = workbook.addWorksheet('UserDetails');
+        worksheet.addRow([
+            'First Name',
+            'Last Name',
+            'Email',
+            'Age',
+            'Height',
+            'Weight',
+            'Gender',
+            'Goal',
+            'City',
+            'Country',
+            'Phone',
+            'Product'
+        ]);
+    }
+
+    // Add new rows
+    for (const product of products) {
         worksheet.addRow([
             user.firstName,
             user.lastName,
@@ -494,8 +505,10 @@ const createExcelWorkbook = async (user, userProfile, shippingProfile, products)
         ]);
     }
 
-    return workbook;
+    // Write the workbook back to the file
+    await workbook.xlsx.writeFile(excelFilePath);
 };
+
 
 
 export{
