@@ -115,17 +115,16 @@ const updateUserProfile = asyncHandler(async(req,res)=>{
         console.log("req user updateuserprofile",req.user)
         console.log("req body updateuserprofile",req.body)
 
-        const userName = req.user.userName;
         const { age, weight, height, goal, gender, country, city } = req.body;
     
         if (!age || !weight || !height || !goal || !gender || !country || !city) {
           throw new ApiError(400, "All fields are required");
         }
         
-        let profile = await Profile.findOne({ user: userName });
+        let profile = await Profile.findById(req.user._id);
         
         if (!profile) {
-          profile = new Profile({user: userName,age,weight,height,goal,gender,country,city,});
+          profile = new Profile({user: req.user._id,age,weight,height,goal,gender,country,city,});
         } else {
           profile.age = age;
           profile.weight = weight;
@@ -151,6 +150,38 @@ const updateUserProfile = asyncHandler(async(req,res)=>{
         console.error("Error updating profile:", error);
         throw new ApiError(500,"Profile not updated")
       }
+})
+
+const updateShippingDetails = asyncHandler(async(req,res)=>{
+    const { address, city , state , country , pincode , phoneNo} = req.body;
+    
+    if (!address || !city || !state || !country || !pincode || !phoneNo) {
+      throw new ApiError(400, "All fields are required");
+    }
+        
+    let shipping = await Shipping.findById(req.user._id);
+        
+    if (!shipping) {
+      shipping = new Shipping({user: req.user._id, address, city , state , country , pincode , phoneNo});
+    } else {
+        shipping.address = address,
+        shipping.city = city,
+        shipping.state = state,
+        shipping.country = country,
+        shipping.pincode = pincode,
+        shipping.phoneNo = phoneNo
+    }
+    
+    await shipping.save();
+    const options = {       
+        httpOnly:true,
+        secure:true
+    }
+    
+    return res.status(200)
+    // .cookie("accessToken",accessToken,options)
+    // .cookie("refreshToken",refreshToken,options)
+    .json(new ApiResponse(200, shipping, "Profile updated successfully"));
 })
 
 
@@ -578,7 +609,7 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
     let subtotalPrice = totalPrice + (totalPrice*tax);
     const {paymentMethod} = req.body;
 
-    //const shippingInfo = await Shipping.findById(user.shippingInfo._id)
+    //const shippingInfo = await Shipping.findById(user.shippingInfo.toString())
 
     const order = await Order.create({
         user:req.user._id,
@@ -653,6 +684,7 @@ export {
     registerUser,
     loginUser,
     updateUserProfile,
+    updateShippingDetails,
     getDetails,
     logoutUser,
     getAllProducts,
