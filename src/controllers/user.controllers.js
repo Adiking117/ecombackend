@@ -283,7 +283,7 @@ const getAllProducts = asyncHandler(async(req, res) => {
             return item._id.toString() === product._id.toString();
         });
         const isInCart = user.cart.some((item) => {
-            return item.productId.toString() === product._id.toString();
+            return item.product._id.toString() === product._id.toString();
         });
         return {
             ...product.toObject(),
@@ -309,7 +309,7 @@ const getProduct = asyncHandler(async(req,res)=>{
         return item._id.toString() === product._id.toString()
     });
     const isInCart = user.cart.some((item) =>{
-        return item._id.toString() === product._id.toString()
+        return item.product._id.toString() === product._id.toString()
     });
     const productDetails = {
         product,
