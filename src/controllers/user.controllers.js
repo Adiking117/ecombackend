@@ -184,6 +184,30 @@ const updateShippingDetails = asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200, shipping, "Profile updated successfully"));
 })
 
+const getShippingDetails = asyncHandler(async(req,res)=>{
+    const shippingDetails = await Shipping.findOne( {user:req.user._id} )
+    if(!shippingDetails){
+        throw new ApiError(404,"Shipping details not found")
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,shippingDetails,"Shipping Details fetcehd successfully")
+    )
+})
+
+const getProfile = asyncHandler(async(req,res)=>{
+    const profileDetails = await Profile.findOne( {user:req.user._id} )
+    if(!profileDetails){
+        throw new ApiError(404,"Profile details not found")
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,profileDetails,"Profile Details fetcehd successfully")
+    )
+})
+
 
 const getDetails = asyncHandler(async(req,res)=>{
     
@@ -609,7 +633,7 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
     let subtotalPrice = totalPrice + (totalPrice*tax);
     const {paymentMethod} = req.body;
 
-    //const shippingInfo = await Shipping.findById(user.shippingInfo.toString())
+    const shippingInfo = await Shipping.findById(user.shippingInfo.toString())
 
     const order = await Order.create({
         user:req.user._id,
@@ -617,7 +641,7 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
         totalProductPrice:totalPrice,
         subtotalPrice:subtotalPrice,
         paymentMethod:paymentMethod,
-        //shippingInfo:shippingInfo,
+        shippingInfo:shippingInfo,
     })
 
     if(!order){
@@ -651,6 +675,14 @@ const doPayment = asyncHandler(async(req,res)=>{
     }
     order.paymentStatus = 'Done'
     await order.save();
+
+    const user = req.user;
+    const notification = await Notification.create({
+        user:req.user._id,
+        message: `Payment Done Successfully`
+    })
+    user.notifications.push(notification);
+    await user.save();
     return res
     .status(200)
     .json(
@@ -685,6 +717,8 @@ export {
     loginUser,
     updateUserProfile,
     updateShippingDetails,
+    getShippingDetails,
+    getProfile,
     getDetails,
     logoutUser,
     getAllProducts,

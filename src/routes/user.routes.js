@@ -1,6 +1,6 @@
 import { Router } from "express"
 
-import { registerUser,loginUser, updateUserProfile, logoutUser, getDetails, getAllProducts, getProduct, getProductsByCategory, addItemsToCart, viewCartItems, addCartItemQty, subCartItemQty, deleteCartItem, deleteCart, rateAndReviewProduct, editProductReview, deleteProductReveiw, addToWishlist, viewWishlist, deleteWishlistProduct, deleteWishlist, buyCartProducts, doPayment, getMyOrders, getOrderHistory, updateShippingDetails } from "../controllers/user.controllers.js"
+import { registerUser,loginUser, updateUserProfile, logoutUser, getDetails, getAllProducts, getProduct, getProductsByCategory, addItemsToCart, viewCartItems, addCartItemQty, subCartItemQty, deleteCartItem, deleteCart, rateAndReviewProduct, editProductReview, deleteProductReveiw, addToWishlist, viewWishlist, deleteWishlistProduct, deleteWishlist, buyCartProducts, doPayment, getMyOrders, getOrderHistory, updateShippingDetails, getProfile, getShippingDetails } from "../controllers/user.controllers.js"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { getProductReviews, viewGalleryImage, viewGalleryImages } from "../controllers/admin.controllers.js"
 
@@ -20,6 +20,10 @@ userRouter.route("/profile").post(verifyJWT,updateUserProfile)
 userRouter.route("/get-details").get(verifyJWT,getDetails)
 
 userRouter.route("/shippingDetails").post(verifyJWT,updateShippingDetails)
+
+userRouter.route("/get-profile").get(verifyJWT,getProfile)
+
+userRouter.route("/get-shipping").get(verifyJWT,getShippingDetails)
 
 
 // Gallery
