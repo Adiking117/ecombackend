@@ -673,11 +673,20 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
     user.orders.push(order)
     user.cart = [];
     //const notification = new Notification({ user: user._id, message: "Order Placed Successfully" });
-    const notification = await Notification.create({
+    const notification1 = await Notification.create({
         user:user._id,
         message: "Order Placed Successfully"
     })
-    user.notifications.push(notification);
+    user.notifications.push(notification1);
+
+    order.paymentStatus = 'Done'
+    await order.save();
+
+    const notification2 = await Notification.create({
+        user:user._id,
+        message: `Payment Done Successfully`
+    })
+    user.notifications.push(notification2);
     await user.save();
 
     return res
@@ -689,28 +698,28 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
 })
 
 
-const doPayment = asyncHandler(async(req,res)=>{
-    const orderId = req.params.id;
-    const order = await Order.findById(orderId);
-    if(!order){
-        throw new ApiError(404,"Order not found")
-    }
-    order.paymentStatus = 'Done'
-    await order.save();
+// const doPayment = asyncHandler(async(req,res)=>{
+//     const orderId = req.params.id;
+//     const order = await Order.findById(orderId);
+//     if(!order){
+//         throw new ApiError(404,"Order not found")
+//     }
+//     order.paymentStatus = 'Done'
+//     await order.save();
 
-    const user = req.user;
-    const notification = await Notification.create({
-        user:req.user._id,
-        message: `Payment Done Successfully`
-    })
-    user.notifications.push(notification);
-    await user.save();
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200,order,"Payment Done successfully")
-    )
-})
+//     const user = req.user;
+//     const notification = await Notification.create({
+//         user:req.user._id,
+//         message: `Payment Done Successfully`
+//     })
+//     user.notifications.push(notification);
+//     await user.save();
+//     return res
+//     .status(200)
+//     .json(
+//         new ApiResponse(200,order,"Payment Done successfully")
+//     )
+// })
 
 
 const getMyOrders = asyncHandler(async(req,res)=>{
@@ -760,7 +769,7 @@ export {
     deleteWishlistProduct,
     deleteWishlist,
     buyCartProducts,
-    doPayment,
+    //doPayment,
     getMyOrders,
     getOrderHistory
 }

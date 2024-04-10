@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { upload } from "../middlewares/multer.middlewares.js"
-import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, giveOrderDeliveryDays } from "../controllers/admin.controllers.js";
+import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, giveOrderDeliveryDays, completeOrder } from "../controllers/admin.controllers.js";
 
 const adminRouter = Router();
 
@@ -94,7 +94,7 @@ adminRouter.route("/view/orders/:id").get(verifyJWT,authorizeRoles(["admin","sup
 
 adminRouter.route("/view/orders/:id/giveEstimateDays").put(verifyJWT,authorizeRoles(["admin","superadmin"]),giveOrderDeliveryDays)
 
-
+adminRouter.route("/view/orders/:id/complete").put(verifyJWT,authorizeRoles(["admin","superadmin"]),completeOrder)
 
 
 export default adminRouter

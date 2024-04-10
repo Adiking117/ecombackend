@@ -1,5 +1,6 @@
 import { User } from "../models/user.models.js"
 import { Profile } from "../models/profile.models.js"
+import { Shipping } from "../models/shipping.models.js"
 import { Gallery } from "../models/gallery.models.js"
 import { Product } from "../models/products.models.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
@@ -7,6 +8,9 @@ import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { uploadOnCloudinary,deleteFromCloudinary } from "../utils/cloudinary.js"
 import { Order } from "../models/orders.models.js"
+import { UserDetails } from "../models/userDetails.models.js"
+import excel from 'exceljs';
+import { Notification } from "../models/notifications.models.js"
 
 
 // get all users , get a user detail
@@ -391,8 +395,107 @@ const giveOrderDeliveryDays = asyncHandler(async(req,res)=>{
 })
 
 const completeOrder = asyncHandler(async(req,res)=>{
+    const orderId = req.params.id;
+    const order = await Order.findById(orderId);
+    if (!order) {
+        throw new ApiError(404, "Order not found");
+    }
+    order.orderStatus = 'Delivered';
+    await order.save();
 
-})
+    const userId = order.user;
+    const user = await User.findById(userId);
+    if(!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const userProfile = await Profile.findById(user.userProfile.toString())
+    const shippingProfile = await Shipping.findById(user.shippingInfo.toString())
+    const productsId = order.orderItems.map(item => item.product)
+    let products = [];
+    for(const id of productsId){
+        const product = await Product.findById(id);
+        products.push(product.name)
+    }
+
+    const userDetails = new UserDetails({
+        first_name: user.firstName,
+        last_name: user.lastName,
+        email: user.email,
+        gender: userProfile.gender,
+        city: userProfile.city,
+        country: userProfile.country,
+        age: userProfile.age,
+        height: userProfile.height,
+        weight: userProfile.weight,
+        goal: userProfile.goal, 
+        phone: shippingProfile.phoneNo,
+        products:products
+    });
+    await userDetails.save();
+
+    const workbook = await createExcelWorkbook(user, userProfile, shippingProfile, products);
+    const excelFileName = 'user_details.xlsx';
+    const excelFilePath = `C:/Users/Aditya/Desktop/Ecomm CLG/backend/public/temp/${excelFileName}`;
+    await workbook.xlsx.writeFile(excelFilePath);
+
+    const notification = await Notification.create({
+        user:user._id,
+        message:`Order Delivered Successfully`
+    })
+    user.notifications.push(notification);
+
+
+    if(user.orders.length > 0) {
+        user.orders[0].orderStatus = 'Delivered';
+    }
+    user.orderHistory.push(order);
+    user.orders = [];
+    await user.save();
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, {}, "Order completed successfully")
+    );
+});
+
+const createExcelWorkbook = async (user, userProfile, shippingProfile, products) => {
+    const workbook = new excel.Workbook();
+    const worksheet = workbook.addWorksheet('UserDetails');
+    worksheet.addRow([
+        'First Name',
+        'Last Name',
+        'Email',
+        'Age',
+        'Height',
+        'Weight',
+        'Gender',
+        'Goal',
+        'City',
+        'Country',
+        'Phone',
+        'Product'
+    ]);
+    for(const product of products) {
+        worksheet.addRow([
+            user.firstName,
+            user.lastName,
+            user.email,
+            userProfile.age,
+            userProfile.height,
+            userProfile.weight,
+            userProfile.gender,
+            userProfile.goal,
+            userProfile.city,
+            userProfile.country,
+            shippingProfile.phoneNo,
+            product
+        ]);
+    }
+
+    return workbook;
+};
 
 
 export{
