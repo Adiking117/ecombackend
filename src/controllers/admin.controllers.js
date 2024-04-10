@@ -348,6 +348,7 @@ const getAllOrders = asyncHandler(async(req,res)=>{
 })
 
 const getOrder = asyncHandler(async(req,res)=>{
+    console.log("Hiii order by id")
     const order = await Order.findById(req.params.id)
     if(!order){
         throw new ApiError(404,"Order not found")
@@ -360,7 +361,8 @@ const getOrder = asyncHandler(async(req,res)=>{
 })
 
 const getPaymentDoneOrders = asyncHandler(async(req,res)=>{
-    const orders = await Order.findOne({ paymentStatus:"Done" });
+    console.log("Hiii done order")
+    const orders = await Order.find({ paymentStatus:"Done" });
     return res
     .status(200)
     .json(
@@ -369,7 +371,8 @@ const getPaymentDoneOrders = asyncHandler(async(req,res)=>{
 }) 
 
 const getPaymentPendingOrders = asyncHandler(async(req,res)=>{
-    const orders = await Order.findOne({ paymentStatus:"Pending" });
+    console.log("hii pending order")
+    const orders = await Order.find({ paymentStatus:"Pending" });
     return res
     .status(200)
     .json(
@@ -378,7 +381,7 @@ const getPaymentPendingOrders = asyncHandler(async(req,res)=>{
 })
 
 const getDeliveredOrders = asyncHandler(async(req,res)=>{
-    const orders = await Order.findOne({ orderStatus:"Delivered" });
+    const orders = await Order.find({ orderStatus:"Delivered" });
     return res
     .status(200)
     .json(

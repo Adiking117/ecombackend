@@ -136,6 +136,11 @@ const updateUserProfile = asyncHandler(async(req,res)=>{
         }
     
         await profile.save();
+
+        const user = req.user
+        user.userProfile = profile._id;
+
+        await user.save();
         const options = {       
             httpOnly:true,
             secure:true
@@ -177,6 +182,11 @@ const updateShippingDetails = asyncHandler(async(req,res)=>{
         httpOnly:true,
         secure:true
     }
+
+    const user = req.user
+    user.shippingInfo = shipping._id;
+
+    await user.save();
     
     return res.status(200)
     // .cookie("accessToken",accessToken,options)
@@ -632,7 +642,6 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
     }
     let subtotalPrice = totalPrice + (totalPrice*tax);
     const {paymentMethod} = req.body;
-
     const shippingInfo = await Shipping.findById(user.shippingInfo.toString())
 
     const order = await Order.create({
@@ -650,7 +659,7 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
 
     user.orders.push(order)
     user.cart = [];
-    // const notification = new Notification({ user: user._id, message: "Order Placed Successfully" });
+    //const notification = new Notification({ user: user._id, message: "Order Placed Successfully" });
     const notification = await Notification.create({
         user:user._id,
         message: "Order Placed Successfully"
