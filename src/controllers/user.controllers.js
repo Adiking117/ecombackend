@@ -661,8 +661,8 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
         throw new ApiError(500,"Order not successfull")
     }
 
-    //user.orders.push(order)
-    //user.cart = [];
+    user.orders.push(order)
+    user.cart = [];
     //const notification = new Notification({ user: user._id, message: "Order Placed Successfully" });
     const notification = await Notification.create({
         user:user._id,
