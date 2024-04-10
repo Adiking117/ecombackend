@@ -15,11 +15,11 @@ userRouter.route("/logout").post(verifyJWT,logoutUser)
 
 
 // Userdetails
-userRouter.route("/profile").post(verifyJWT,updateUserProfile)
+userRouter.route("/profile").put(verifyJWT,updateUserProfile)
 
 userRouter.route("/get-details").get(verifyJWT,getDetails)
 
-userRouter.route("/shippingDetails").post(verifyJWT,updateShippingDetails)
+userRouter.route("/shippingDetails").put(verifyJWT,updateShippingDetails)
 
 userRouter.route("/get-profile").get(verifyJWT,getProfile)
 
