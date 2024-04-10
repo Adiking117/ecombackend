@@ -50,7 +50,7 @@ const orderSchema = new mongoose.Schema({
         ref:"Shipping"
     },
     deliveredAt: {
-        type:Date
+        type:Date,
     },
 },{
     timestamps:true

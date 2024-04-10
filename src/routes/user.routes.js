@@ -2,7 +2,7 @@ import { Router } from "express"
 
 import { registerUser,loginUser, updateUserProfile, logoutUser, getDetails, getAllProducts, getProduct, getProductsByCategory, addItemsToCart, viewCartItems, addCartItemQty, subCartItemQty, deleteCartItem, deleteCart, rateAndReviewProduct, editProductReview, deleteProductReveiw, addToWishlist, viewWishlist, deleteWishlistProduct, deleteWishlist, buyCartProducts, doPayment, getMyOrders, getOrderHistory, updateShippingDetails, getProfile, getShippingDetails } from "../controllers/user.controllers.js"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
-import { getProductReviews, viewGalleryImage, viewGalleryImages } from "../controllers/admin.controllers.js"
+import { getOrder, getProductReviews, viewGalleryImage, viewGalleryImages } from "../controllers/admin.controllers.js"
 
 const userRouter = Router()
 
@@ -82,6 +82,8 @@ userRouter.route("/buy/products").post(verifyJWT,buyCartProducts)
 userRouter.route("/view/orders/:id/pay").put(verifyJWT,doPayment)
 
 userRouter.route("/view/orders").get(verifyJWT,getMyOrders)
+
+userRouter.route("/view/orders/:id").get(verifyJWT,getOrder)
 
 userRouter.route("/view/orders/history").get(verifyJWT,getOrderHistory)
 

@@ -6,6 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { uploadOnCloudinary,deleteFromCloudinary } from "../utils/cloudinary.js"
+import { Order } from "../models/orders.models.js"
 
 
 // get all users , get a user detail
@@ -338,11 +339,75 @@ const getProductReviews = asyncHandler(async (req, res) => {
 
 // get all orders , get a order , complete order
 const getAllOrders = asyncHandler(async(req,res)=>{
-
+    const orders = await Order.find();
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,orders,"Orders fetched successfully")
+    )
 })
 
 const getOrder = asyncHandler(async(req,res)=>{
+    const order = await Order.findById(req.params.id)
+    if(!order){
+        throw new ApiError(404,"Order not found")
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,order,"Order fetched succesdfuly")
+    )
+})
 
+const getPaymentDoneOrders = asyncHandler(async(req,res)=>{
+    const orders = await Order.findOne({ paymentStatus:"Done" });
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,orders,"PAyment Done Orders fetched succesffuly")
+    )
+}) 
+
+const getPaymentPendingOrders = asyncHandler(async(req,res)=>{
+    const orders = await Order.findOne({ paymentStatus:"Pending" });
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,orders,"PAyment Pending Orders fetched succesffuly")
+    )
+})
+
+const getDeliveredOrders = asyncHandler(async(req,res)=>{
+    const orders = await Order.findOne({ orderStatus:"Delivered" });
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,orders,"Delivery Done Orders fetched succesffuly")
+    )
+})
+
+const giveOrderDeliveryDays = asyncHandler(async(req,res)=>{
+    const { days } = req.body;
+    const order = await Order.findById(req.params.id)
+    const userId = order.user;
+    const user = await User.findById(userId)
+    const deliveryDate = new Date();
+    deliveryDate.setDate(deliveryDate.getDate() + days);
+    order.deliveredAt = deliveryDate;
+
+    await order.save();
+    const notification = await Notification.create({
+        user:userId,
+        message: `Your Order will be delivered in ${days} days at ${deliveryDate}`
+    })
+    user.notifications.push(notification);
+    await user.save();
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,{},"Notification sent successfully")
+    )
 })
 
 const completeOrder = asyncHandler(async(req,res)=>{
@@ -369,5 +434,9 @@ export{
     getProductReviews,
     getAllOrders,
     getOrder,
+    getPaymentDoneOrders,
+    getPaymentPendingOrders,
+    getDeliveredOrders,
+    giveOrderDeliveryDays,
     completeOrder
 }
