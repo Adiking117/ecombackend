@@ -360,6 +360,26 @@ const getAllOrders = asyncHandler(async(req,res)=>{
 });
 
 
+const getPlacedOrders = asyncHandler(async(req,res)=>{
+    const placedOrders = await Order.find( {orderStatus : "Placed"} ).populate('user', 'firstName lastName');
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,placedOrders,"Placed Orders fetched successfully")
+    )
+})
+
+
+const getDeliveredOrders = asyncHandler(async(req,res)=>{
+    const deliveredOrders = await Order.find( {orderStatus : "Delivered"} ).populate('user', 'firstName lastName');
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,deliveredOrders,"Delivered Orders fetched successfully")
+    )
+})
+
+
 const getOrder = asyncHandler(async(req,res)=>{
     const order = await Order.findById(req.params.id).populate('user', 'firstName lastName');
     if(!order){
@@ -371,6 +391,7 @@ const getOrder = asyncHandler(async(req,res)=>{
         new ApiResponse(200,order,"Order fetched succesdfuly")
     )
 })
+
 
 const giveOrderDeliveryDays = asyncHandler(async(req,res)=>{
     const { days } = req.body;
@@ -395,6 +416,7 @@ const giveOrderDeliveryDays = asyncHandler(async(req,res)=>{
         new ApiResponse(200,{},"Notification sent successfully")
     )
 })
+
 
 const completeOrder = asyncHandler(async(req,res)=>{
     const orderId = req.params.id;
@@ -452,8 +474,14 @@ const completeOrder = asyncHandler(async(req,res)=>{
     if(user.orders.length > 0) {
         user.orders[0].orderStatus = 'Delivered';
     }
+
     user.orderHistory.push(order);
-    user.orders = [];
+
+    const index = user.orders.findIndex(userOrder => userOrder._id.toString() === orderId);
+    if(index !== -1) {
+        user.orders.splice(index, 1);
+    }
+
     await user.save();
 
     return res
@@ -462,6 +490,7 @@ const completeOrder = asyncHandler(async(req,res)=>{
         new ApiResponse(200, {}, "Order completed successfully")
     );
 });
+
 
 const appendUserDetailsToExcel = async (user, userProfile, shippingProfile, products, excelFilePath) => {
     const workbook = new excel.Workbook();
@@ -526,6 +555,8 @@ export{
     getProductReviews,
     getAllOrders,
     getOrder,
+    getPlacedOrders,
+    getDeliveredOrders,
     giveOrderDeliveryDays,
     completeOrder
 }

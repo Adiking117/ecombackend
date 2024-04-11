@@ -10,6 +10,9 @@ const singleOrderItemSchema = new mongoose.Schema({
     price:{
         type:Number
     },
+    netprice:{
+        type:Number
+    },
     product:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Product"

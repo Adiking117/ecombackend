@@ -645,6 +645,7 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
             name:name,
             image:image,
             price:price,
+            netprice:price*item.quantity,
             product:productToBeOrdered._id
         }
         //orderItems = [...orderItems,singleOrderItem];
@@ -692,34 +693,10 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
     return res
     .status(200)
     .json(
-        new ApiResponse(200,order,"Order created successfully")
+        new ApiResponse(200,order,"Order Placed successfully")
     )
 
 })
-
-
-// const doPayment = asyncHandler(async(req,res)=>{
-//     const orderId = req.params.id;
-//     const order = await Order.findById(orderId);
-//     if(!order){
-//         throw new ApiError(404,"Order not found")
-//     }
-//     order.paymentStatus = 'Done'
-//     await order.save();
-
-//     const user = req.user;
-//     const notification = await Notification.create({
-//         user:req.user._id,
-//         message: `Payment Done Successfully`
-//     })
-//     user.notifications.push(notification);
-//     await user.save();
-//     return res
-//     .status(200)
-//     .json(
-//         new ApiResponse(200,order,"Payment Done successfully")
-//     )
-// })
 
 
 const getMyOrders = asyncHandler(async(req,res)=>{
@@ -740,6 +717,42 @@ const getOrderHistory = asyncHandler(async(req,res)=>{
     .status(200)
     .json(
         new ApiResponse(200,orders,"Orders fetched Successfully")
+    )
+})
+
+
+const buyAgainOrders = asyncHandler(async(req,res)=>{
+    const user = req.user;
+    const orderId = req.params.id;
+    const orderToBeRepeatedIndex = user.orderHistory.findIndex((order)=>{
+        return order._id.toString() === orderId
+    })
+    const orderToBeRepeated = user.orderHistory[orderToBeRepeatedIndex];
+    console.log(orderToBeRepeated)
+
+    for(const prod of orderToBeRepeated.orderItems){
+        const product = await Product.findById(prod.product.toString())
+        product.stock -= (prod.netprice/prod.price)
+        await product.save()
+    }
+
+    const {paymentMethod} = req.body;
+    const shippingInfo = await Shipping.findById(user.shippingInfo.toString())
+
+    const newOrder = await Order.create({
+        user:user._id,
+        orderItems:orderToBeRepeated.orderItems,
+        totalProductPrice:orderToBeRepeated.totalProductPrice,
+        subtotalPrice:orderToBeRepeated.subtotalPrice,
+        paymentMethod:paymentMethod,
+        shippingInfo:{shippingInfo}
+    })
+    
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,{},"Order placed again successfully")
     )
 })
 
@@ -769,7 +782,7 @@ export {
     deleteWishlistProduct,
     deleteWishlist,
     buyCartProducts,
-    //doPayment,
     getMyOrders,
-    getOrderHistory
+    getOrderHistory,
+    buyAgainOrders
 }
