@@ -12,6 +12,7 @@ import { UserDetails } from "../models/userDetails.models.js"
 import excel from 'exceljs';
 import { Notification } from "../models/notifications.models.js"
 import * as fs from 'fs';
+import { fileLocation } from "../filelocation.js"
 
 
 
@@ -460,7 +461,7 @@ const completeOrder = asyncHandler(async(req,res)=>{
     await userDetails.save();
 
     const excelFileName = 'user_details.xlsx';
-    const excelFilePath = `C:/Users/Aditya/Desktop/Ecomm CLG/backend/public/temp/${excelFileName}`;
+    const excelFilePath = `${fileLocation}/${excelFileName}`;
 
     await appendUserDetailsToExcel(user, userProfile, shippingProfile, products, excelFilePath);
 
