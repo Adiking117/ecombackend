@@ -628,7 +628,7 @@ const deleteWishlist = asyncHandler(async(req,res)=>{
 })
 
 
-// -> buy cart products -> order creation
+// orders
 const buyCartProducts = asyncHandler(async(req,res)=>{
     const user = await User.findById(req.user._id);
     // console.log("user" ,user)
@@ -728,7 +728,6 @@ const buyAgainOrders = asyncHandler(async(req,res)=>{
         return order._id.toString() === orderId
     })
     const orderToBeRepeated = user.orderHistory[orderToBeRepeatedIndex];
-    console.log(orderToBeRepeated)
 
     for(const prod of orderToBeRepeated.orderItems){
         const product = await Product.findById(prod.product.toString())
@@ -747,13 +746,57 @@ const buyAgainOrders = asyncHandler(async(req,res)=>{
         paymentMethod:paymentMethod,
         shippingInfo:{shippingInfo}
     })
-    
 
+    if(!newOrder){
+        throw new ApiError(500,"Order not successfull")
+    }
+
+    user.orders.push(newOrder)
+    const notification1 = await Notification.create({
+        user:user._id,
+        message: "Order Placed Successfully"
+    })
+    user.notifications.push(notification1);
+
+    newOrder.paymentStatus = 'Done'
+    await newOrder.save();
+
+    const notification2 = await Notification.create({
+        user:user._id,
+        message: `Payment Done Successfully`
+    })
+    user.notifications.push(notification2);
+    await user.save();
+    
     return res
     .status(200)
     .json(
-        new ApiResponse(200,{},"Order placed again successfully")
+        new ApiResponse(200,newOrder,"Order placed again successfully")
     )
+})
+
+
+const getAllNotications = asyncHandler(async(req,res)=>{
+    const user = req.user;
+    const notifications = user.notifications;
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,notifications,"Notifications fetched successfully")
+    )
+})
+
+const getNotificationById = asyncHandler(async(req,res)=>{
+    const user = req.user;
+    const notificationToBeRead = await Notification.findById(req.params.id)
+    notificationToBeRead.status = 'read';
+    notificationToBeRead.save();
+
+})
+
+
+const notificationsUnread = asyncHandler(async(req,res)=>{
+
 })
 
 export {
@@ -784,5 +827,8 @@ export {
     buyCartProducts,
     getMyOrders,
     getOrderHistory,
-    buyAgainOrders
+    buyAgainOrders,
+    getAllNotications,
+    getNotificationById,
+    notificationsUnread
 }

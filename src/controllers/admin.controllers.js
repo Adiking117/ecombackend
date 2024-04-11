@@ -403,9 +403,10 @@ const giveOrderDeliveryDays = asyncHandler(async(req,res)=>{
     order.deliveredAt = deliveryDate;
 
     await order.save();
+
     const notification = await Notification.create({
         user:userId,
-        message: `Your Order will be delivered in ${days} days at ${deliveryDate}`
+        message: `Your Order is confirmed and will be delivered in ${days} days at ${order.deliveredAt}`
     })
     user.notifications.push(notification);
     await user.save();
@@ -464,11 +465,11 @@ const completeOrder = asyncHandler(async(req,res)=>{
     await appendUserDetailsToExcel(user, userProfile, shippingProfile, products, excelFilePath);
 
 
-    const notification = await Notification.create({
-        user:user._id,
-        message:`Order Delivered Successfully`
-    })
-    user.notifications.push(notification);
+    // const notification = await Notification.create({
+    //     user:user._id,
+    //     message:`Order Delivered Successfully`
+    // })
+    // user.notifications.push(notification);
 
 
     if(user.orders.length > 0) {

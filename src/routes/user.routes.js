@@ -1,6 +1,6 @@
 import { Router } from "express"
 
-import { registerUser,loginUser, updateUserProfile, logoutUser, getDetails, getAllProducts, getProduct, getProductsByCategory, addItemsToCart, viewCartItems, addCartItemQty, subCartItemQty, deleteCartItem, deleteCart, rateAndReviewProduct, editProductReview, deleteProductReveiw, addToWishlist, viewWishlist, deleteWishlistProduct, deleteWishlist, buyCartProducts, getMyOrders, getOrderHistory, updateShippingDetails, getProfile, getShippingDetails, buyAgainOrders } from "../controllers/user.controllers.js"
+import { registerUser,loginUser, updateUserProfile, logoutUser, getDetails, getAllProducts, getProduct, getProductsByCategory, addItemsToCart, viewCartItems, addCartItemQty, subCartItemQty, deleteCartItem, deleteCart, rateAndReviewProduct, editProductReview, deleteProductReveiw, addToWishlist, viewWishlist, deleteWishlistProduct, deleteWishlist, buyCartProducts, getMyOrders, getOrderHistory, updateShippingDetails, getProfile, getShippingDetails, buyAgainOrders, getAllNotications } from "../controllers/user.controllers.js"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { getOrder, getProductReviews, viewGalleryImage, viewGalleryImages } from "../controllers/admin.controllers.js"
 
@@ -86,5 +86,10 @@ userRouter.route("/view/orders/history").get(verifyJWT,getOrderHistory)
 userRouter.route("/view/orders/:id").get(verifyJWT,getOrder)
 
 userRouter.route("/view/orders/:id/buyagain").post(verifyJWT,buyAgainOrders)
+
+
+// notification
+userRouter.route("/view/notifications").get(verifyJWT,getAllNotications)
+
 
 export default userRouter
