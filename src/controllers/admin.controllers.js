@@ -184,7 +184,7 @@ const deleteGalleryImage = asyncHandler(async(req,res)=>{
 
 // add products , view products , view product by id -> update products , delete products , get product reviews
 const addProducts = asyncHandler(async(req,res)=>{
-    const { name,price,description,stock,category } = req.body;
+    const { name,price,description,stock,category,weight } = req.body;
     if(!name || !price || !description || !stock || !category){
         throw new ApiError(401,"Fill All the details")
     }
@@ -204,6 +204,7 @@ const addProducts = asyncHandler(async(req,res)=>{
         image:image.url,
         stock,
         category,
+        weight
     })
 
     return res

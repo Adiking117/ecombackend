@@ -777,22 +777,43 @@ const buyAgainOrders = asyncHandler(async(req,res)=>{
 
 
 const getAllNotications = asyncHandler(async(req,res)=>{
-    const user = req.user;
-    const notifications = user.notifications;
+    const userNotifications = await Notification.find( {user: req.user._id })
     return res
     .status(200)
     .json(
-        new ApiResponse(200,notifications,"Notifications fetched successfully")
+        new ApiResponse(200,userNotifications,"Notifications fetched successfully")
     )
 })
 
 const getNotificationById = asyncHandler(async(req,res)=>{
-    const user = req.user;
-    const notificationToBeRead = await Notification.findById(req.params.id)
-    notificationToBeRead.status = 'read';
-    notificationToBeRead.save();
+    const userId = req.user._id;
+    const notificationId = req.params.id;
 
-})
+    const notificationToBeRead = await Notification.findByIdAndUpdate(
+        notificationId,
+        { status: 'read' },
+        { new: true }
+    );
+
+    if (!notificationToBeRead) {
+        throw new ApiError(404, "Notification not found");
+    }
+    const user = await User.findById(userId);
+    const notificationIndex = user.notifications.findIndex(notification => notification._id.equals(notificationToBeRead._id));
+
+    if (notificationIndex !== -1) {
+        user.notifications[notificationIndex].status = 'read';
+        user.markModified('notifications');
+        await user.save();
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, notificationToBeRead, "Notification read successfully")
+    );
+});
+
 
 
 const notificationsUnread = asyncHandler(async(req,res)=>{

@@ -47,6 +47,9 @@ const productSchema = new mongoose.Schema({
         enum:["Eatables","Equipments","Accessories"],
         required:true
     },
+    weight:{
+        type:Number,
+    }
 },{timetsamps:true})
 
 export const Product = mongoose.model("Product",productSchema)
