@@ -33,9 +33,9 @@ userRouter.route("/gallery/:id").get(viewGalleryImage)
 
 
 // Products
-userRouter.route("/view/products").get(getAllProducts)
+userRouter.route("/view/products").get(verifyJWT,getAllProducts)
 
-userRouter.route("/view/products/:id").get(getProduct)
+userRouter.route("/view/products/:id").get(verifyJWT,getProduct)
 
 userRouter.route("/view/products").get(verifyJWT,getProductsByCategory)
 
