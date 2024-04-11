@@ -27,15 +27,15 @@ userRouter.route("/get-shipping").get(verifyJWT,getShippingDetails)
 
 
 // Gallery
-userRouter.route("/gallery").get(verifyJWT,viewGalleryImages)
+userRouter.route("/gallery").get(viewGalleryImages)
 
-userRouter.route("/gallery/:id").get(verifyJWT,viewGalleryImage)
+userRouter.route("/gallery/:id").get(viewGalleryImage)
 
 
 // Products
-userRouter.route("/view/products").get(verifyJWT,getAllProducts)
+userRouter.route("/view/products").get(getAllProducts)
 
-userRouter.route("/view/products/:id").get(verifyJWT,getProduct)
+userRouter.route("/view/products/:id").get(getProduct)
 
 userRouter.route("/view/products").get(verifyJWT,getProductsByCategory)
 

@@ -486,8 +486,6 @@ const appendUserDetailsToExcel = async (user, userProfile, shippingProfile, prod
             'Product'
         ]);
     }
-
-    // Add new rows
     for (const product of products) {
         worksheet.addRow([
             user.firstName,
@@ -504,8 +502,6 @@ const appendUserDetailsToExcel = async (user, userProfile, shippingProfile, prod
             product
         ]);
     }
-
-    // Write the workbook back to the file
     await workbook.xlsx.writeFile(excelFilePath);
 };
 
