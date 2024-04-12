@@ -28,10 +28,8 @@ const getRecommendedProductsByAgeHeightWeight = asyncHandler(async (req, res) =>
             res.status(500).json({ error: 'An error occurred while running the Python script' });
         });
 
-        const productToBeRecommended = await Product.findOne( { name:recommendedProduct })
-        console.log(productToBeRecommended)
-
-        pythonProcess.on('close', (code) => {
+        pythonProcess.on('close', async(code) => {
+            const productToBeRecommended = await Product.findOne( { name:recommendedProduct })
             res.status(200).json(
                 new ApiResponse(200,productToBeRecommended,"Product recommeded successfully")
             );
@@ -61,9 +59,10 @@ const getRecommendedProductsByGoalGender = asyncHandler(async (req, res) => {
             res.status(500).json({ error: 'An error occurred while running the Python script' });
         });
 
-        pythonProcess.on('close', (code) => {
+        pythonProcess.on('close', async(code) => {
+            const productToBeRecommended = await Product.findOne( { name:recommendedProduct })
             res.status(200).json(
-                new ApiResponse(200, recommendedProduct, "Product recommended successfully")
+                new ApiResponse(200, productToBeRecommended, "Product recommended successfully")
             );
         });
     } catch (error) {
@@ -91,9 +90,11 @@ const getRecommendedProductsByCityCountry = asyncHandler(async(req,res)=>{
             res.status(500).json({ error: 'An error occurred while running the Python script' });
         });
 
-        pythonProcess.on('close', (code) => {
+        pythonProcess.on('close', async(code) => {
+            const productToBeRecommended = await Product.findOne( { name:recommendedProduct })
+
             res.status(200).json(
-                new ApiResponse(200, recommendedProduct, "Product recommended successfully")
+                new ApiResponse(200, productToBeRecommended, "Product recommended successfully")
             );
         });
     } catch (error) {
