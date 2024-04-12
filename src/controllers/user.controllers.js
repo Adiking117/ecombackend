@@ -628,7 +628,7 @@ const deleteWishlist = asyncHandler(async(req,res)=>{
 })
 
 
-// orders
+// Orders
 const buyCartProducts = asyncHandler(async(req,res)=>{
     const user = await User.findById(req.user._id);
     // console.log("user" ,user)
@@ -732,50 +732,13 @@ const buyAgainOrders = asyncHandler(async(req,res)=>{
     for(const prod of orderToBeRepeated.orderItems){
         const product = await Product.findById(prod.product.toString())
         product.stock -= (prod.netprice/prod.price)
-        await product.save()
+        await product.save();
     }
-
-    const {paymentMethod} = req.body;
-    const shippingInfo = await Shipping.findById(user.shippingInfo.toString())
-
-    const newOrder = await Order.create({
-        user:user._id,
-        orderItems:orderToBeRepeated.orderItems,
-        totalProductPrice:orderToBeRepeated.totalProductPrice,
-        subtotalPrice:orderToBeRepeated.subtotalPrice,
-        paymentMethod:paymentMethod,
-        shippingInfo:{shippingInfo}
-    })
-
-    if(!newOrder){
-        throw new ApiError(500,"Order not successfull")
-    }
-
-    user.orders.push(newOrder)
-    const notification1 = await Notification.create({
-        user:user._id,
-        message: "Order Placed Successfully"
-    })
-    user.notifications.push(notification1);
-
-    newOrder.paymentStatus = 'Done'
-    await newOrder.save();
-
-    const notification2 = await Notification.create({
-        user:user._id,
-        message: `Payment Done Successfully`
-    })
-    user.notifications.push(notification2);
-    await user.save();
     
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200,newOrder,"Order placed again successfully")
-    )
 })
 
 
+// Notification
 const getAllNotications = asyncHandler(async(req,res)=>{
     const userNotifications = await Notification.find( {user: req.user._id })
     return res
@@ -814,12 +777,6 @@ const getNotificationById = asyncHandler(async(req,res)=>{
     );
 });
 
-
-
-const notificationsUnread = asyncHandler(async(req,res)=>{
-
-})
-
 export {
     registerUser,
     loginUser,
@@ -851,5 +808,4 @@ export {
     buyAgainOrders,
     getAllNotications,
     getNotificationById,
-    notificationsUnread
 }

@@ -1,3 +1,4 @@
 /node_modules
-
+/src/recommendations/__pycache__
+/src/recommendations/constants.py
 filelocation.js
