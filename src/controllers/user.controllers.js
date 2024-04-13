@@ -724,17 +724,22 @@ const getOrderHistory = asyncHandler(async(req,res)=>{
 const buyAgainOrders = asyncHandler(async(req,res)=>{
     const user = req.user;
     const orderId = req.params.id;
-    const orderToBeRepeatedIndex = user.orderHistory.findIndex((order)=>{
-        return order._id.toString() === orderId
-    })
-    const orderToBeRepeated = user.orderHistory[orderToBeRepeatedIndex];
-
-    for(const prod of orderToBeRepeated.orderItems){
-        const product = await Product.findById(prod.product.toString())
-        product.stock -= (prod.netprice/prod.price)
-        await product.save();
+    const orderToBeRepeated = await Order.findById(orderId)
+    let cart = [];
+    for (const item of orderToBeRepeated.orderItems) {
+        const product = await Product.findById(item.product);
+        cart.push({
+            product: product.toObject(),
+            quantity: item.netprice / item.price
+        });
     }
-    
+    user.cart = [...user.cart, ...cart];    
+    await user.save();
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,cart,"Order Repeated Successfully")
+    )
 })
 
 

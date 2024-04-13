@@ -49,6 +49,10 @@ const productSchema = new mongoose.Schema({
     },
     weight:{
         type:Number,
+    },
+    productGoal:{
+        type:String,
+        enum:["bulk","cut","lean"],
     }
 },{timetsamps:true})
 

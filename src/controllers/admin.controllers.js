@@ -474,8 +474,11 @@ const completeOrder = asyncHandler(async(req,res)=>{
     // user.notifications.push(notification);
 
 
-    if(user.orders.length > 0) {
-        user.orders[0].orderStatus = 'Delivered';
+    const orderIndex = user.orders.findIndex((order)=>{
+        return order._id.toString() === orderId
+    })
+    if(orderIndex !== -1){
+        user.orders[orderIndex].status = 'Delivered'
     }
 
     user.orderHistory.push(order);

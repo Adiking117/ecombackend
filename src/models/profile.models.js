@@ -19,6 +19,7 @@ const profileSchema = new mongoose.Schema({
     },
     goal:{
         type:String,
+        enum:["bulk","cut","lean"],
         required:true
     },
     gender:{
