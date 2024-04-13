@@ -13,6 +13,7 @@ import excel from 'exceljs';
 import { Notification } from "../models/notifications.models.js"
 import * as fs from 'fs';
 import { fileLocation } from "../filelocation.js"
+import { Exercise } from "../models/exercise.models.js"
 
 
 
@@ -164,9 +165,6 @@ const viewGalleryImage = asyncHandler(async(req,res)=>{
 
 const deleteGalleryImage = asyncHandler(async(req,res)=>{
     const imageToBeDeleted = await Gallery.findById(req.params.id)
-
-    console.log("type of to be deleted",typeof(imageToBeDeleted))
-    console.log("image to be deleted",imageToBeDeleted)
     if(!imageToBeDeleted){
         throw new ApiError(404,"Image Not found")
     }
@@ -181,10 +179,80 @@ const deleteGalleryImage = asyncHandler(async(req,res)=>{
 })
 
 
+// exercises
+const addExercises = asyncHandler(async(req,res)=>{
+    const { name,description,instructions,exerciseGoal,bodyPart } = req.body;
+    if(!name || !description || !instructions || !exerciseGoal || !bodyPart){
+        throw new ApiError(401,"Fill All the details")
+    }
+    const gifLocalPath = req.files?.exerciseGif[0]?.path
+    if(!gifLocalPath){
+        throw new ApiError(401,"Image not found")
+    }
+    const videoGif = await uploadOnCloudinary(gifLocalPath)
+    if(!videoGif){
+        throw new ApiError(401,"Gif required")
+    }
+
+    const exercise = await Exercise.create({
+        name,
+        bodyPart,
+        description,
+        instructions,
+        exerciseGoal,
+        exerciseGif:videoGif.url
+    })
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,exercise,"Exercise Added Successsfully")
+    )
+})
+
+
+const veiwAllExercises = asyncHandler(async(req,res)=>{
+    const exercises = await Exercise.find();
+    if(exercises.length===0){
+        throw new ApiError(401,"No exercises Found")
+    }
+    console.log(exercises)
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,exercises,"All exercises fetched Successfully")
+    )
+})
+
+
+const viewExercise = asyncHandler(async(req,res)=>{
+    const exercise = await Exercise.findById(req.params.id)
+    if(!exercise){
+        throw new ApiError(40,"Exercise not found")
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,exercise,"Exercise fetched succesfully")
+    )
+})
+
+
+const deleteExercise = asyncHandler(async(req,res)=>{
+    const exerciseToBeDeleted = await Exercise.findById(req.params.id)
+    await deleteFromCloudinary(exerciseToBeDeleted.exerciseGif)
+    await Exercise.findByIdAndDelete(exerciseToBeDeleted._id)
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,{},"Exercise Deleted successfully")
+    )
+})
+
 
 // add products , view products , view product by id -> update products , delete products , get product reviews
 const addProducts = asyncHandler(async(req,res)=>{
-    const { name,price,description,stock,category,weight } = req.body;
+    const { name,price,description,stock,category,weight,productGoal } = req.body;
     if(!name || !price || !description || !stock || !category){
         throw new ApiError(401,"Fill All the details")
     }
@@ -204,7 +272,8 @@ const addProducts = asyncHandler(async(req,res)=>{
         image:image.url,
         stock,
         category,
-        weight
+        weight,
+        productGoal
     })
 
     return res
@@ -552,6 +621,10 @@ export{
     deleteGalleryImage,
     viewGalleryImage,
     viewGalleryImages,
+    addExercises,
+    veiwAllExercises,
+    viewExercise,
+    deleteExercise,
     addProducts,
     viewAllProducts,
     viewProduct,

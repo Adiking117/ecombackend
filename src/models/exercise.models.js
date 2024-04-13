@@ -5,6 +5,10 @@ const exerciseSchema = new mongoose.Schema({
         type:String,
         required:true
     },
+    bodyPart:{
+        type:String,
+        required:true
+    },
     description:{
         type:String,
         required:true

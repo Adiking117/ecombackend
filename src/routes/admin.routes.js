@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { upload } from "../middlewares/multer.middlewares.js"
-import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, giveOrderDeliveryDays, completeOrder, getPlacedOrders, getDeliveredOrders } from "../controllers/admin.controllers.js";
+import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, giveOrderDeliveryDays, completeOrder, getPlacedOrders, getDeliveredOrders, addExercises, veiwAllExercises, viewExercise, deleteExercise } from "../controllers/admin.controllers.js";
 
 const adminRouter = Router();
 
@@ -48,6 +48,24 @@ adminRouter.route("/view/gallery").get(verifyJWT,authorizeRoles(["admin","supera
 adminRouter.route("/view/gallery/:id").get(verifyJWT,authorizeRoles(["admin","superadmin"]),viewGalleryImage)
 
 adminRouter.route("/view/gallery/:id/deleteImage").delete(verifyJWT,authorizeRoles(["admin","superadmin"]),deleteGalleryImage)
+
+
+// exercises
+adminRouter.route("/view/exercises/addExercise").post(
+    upload.fields([
+        {
+            name:"exerciseGif",
+            maxCount: 1
+        }
+    ]),
+    addExercises
+)
+
+adminRouter.route("/view/exercises").get(verifyJWT,authorizeRoles(["admin","superadmin"]),veiwAllExercises)
+
+adminRouter.route("/view/exercises/:id").get(verifyJWT,authorizeRoles(["admin","superadmin"]),viewExercise)
+
+adminRouter.route("/view/exercises/:id/delete").delete(verifyJWT,authorizeRoles(["admin","superadmin"]),deleteExercise)
 
 
 

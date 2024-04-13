@@ -104,8 +104,55 @@ const getRecommendedProductsByCityCountry = asyncHandler(async(req,res)=>{
 })
 
 
+const getRecommendedProductsByFrequentlyBuying = asyncHandler(async(req, res) => {
+    try {
+        const product = await Product.findById(req.params.id)
+        if(!product){
+            throw new ApiError(400,"Products not found")
+        }
+
+        const pythonProcess = spawn('python', [`${recommendations}/frequentlyBuy.py`, product.name]);
+
+        let productList = []
+
+        let recommendedProductsString = '';
+        let recommendedProducts = []
+
+        pythonProcess.stdout.on('data', (data) => {
+            recommendedProductsString += data.toString().trim();
+            const productsArray = recommendedProductsString.split(/' '|\['|\]|\[/)
+            recommendedProducts = productsArray.map(product => product.trim().replace(/'$/, '')).filter(Boolean);
+            console.log(recommendedProducts);
+        });
+
+
+        pythonProcess.stderr.on('data', (data) => {
+            console.error(`Python stderr: ${data}`);
+            res.status(500).json({ error: 'An error occurred while running the Python script' });
+        });
+
+        pythonProcess.on('close', async(code) => {
+            for (const item of recommendedProducts) {
+                const product = await Product.findOne({ name: item });
+                productList.push(product);
+            }
+            if (code === 0) {
+                res.status(200).json({ productList });
+            } else {
+                res.status(500).json({ error: 'An error occurred while running the Python script' });
+            }
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'An error occurred' });
+    }
+});
+
+
+
 export {
     getRecommendedProductsByAgeHeightWeight,
     getRecommendedProductsByGoalGender,
-    getRecommendedProductsByCityCountry
+    getRecommendedProductsByCityCountry,
+    getRecommendedProductsByFrequentlyBuying
 }
