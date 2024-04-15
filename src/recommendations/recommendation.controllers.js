@@ -173,9 +173,6 @@ const getRecommendedExercisesByExerciseUserGoals = asyncHandler(async(req,res)=>
 const getRecommendedProductsByProductUserGoals = asyncHandler(async(req,res)=>{
     const userProfile = await Profile.findById(req.user.userProfile);
     const recommendedProducts = await Product.find({ productGoal: { $eq: userProfile.goal } }).limit(6);
-    if(recommendedProducts.length === 0){
-        throw new ApiError(400,"Fill your Profile")
-    }
     return res
     .status(200)
     .json(
@@ -238,7 +235,7 @@ const getRecommendedProductsByRecentlyViewedProducts = asyncHandler(async(req,re
     const recentViewedProducts = userHistory.productsViewed.filter((p)=>{
         return p.count >= 3
     })
-    const recentlyViewed = userHistory.productsViewed.slice(-6);
+    const recentlyViewed = recentViewedProducts.slice(-6);
 
     return res
     .status(200)
