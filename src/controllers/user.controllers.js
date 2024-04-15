@@ -138,8 +138,8 @@ const loginUser = asyncHandler(async(req,res)=>{
 
 const updateUserProfile = asyncHandler(async(req,res)=>{
     try {
-        console.log("req user updateuserprofile",req.user)
-        console.log("req body updateuserprofile",req.body)
+        // console.log("req user updateuserprofile",req.user)
+        // console.log("req body updateuserprofile",req.body)
 
         const { age, weight, height, goal, gender, country, city } = req.body;
     
@@ -302,11 +302,19 @@ const logoutUser = asyncHandler(async(req,res)=>{
 
 // Products
 const getAllProducts = asyncHandler(async(req, res) => {
-    const products = await Product.find();
+    const page = parseInt(req.query.page) || 1; 
+    const limit = 3;
+
+    const skip = (page - 1) * limit;
+
+    const products = await Product.find().skip(skip).limit(limit);
+
     if (products.length === 0) {
         throw new ApiError(401, "No products to show");
     }
+
     const user = req.user;
+
     const productsWithStatus = products.map(product => {
         const isInWishlist = user.wishlist.some((item) => {
             return item._id.toString() === product._id.toString();
@@ -320,10 +328,11 @@ const getAllProducts = asyncHandler(async(req, res) => {
             inCart: isInCart
         };
     });
+
     return res
     .status(200)
     .json(
-        new ApiResponse(200, productsWithStatus, "All Products fetched successfully")
+        new ApiResponse(200, productsWithStatus, "Products fetched successfully")
     );
 });
 

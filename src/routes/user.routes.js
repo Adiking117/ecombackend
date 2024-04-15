@@ -3,7 +3,7 @@ import { Router } from "express"
 import { registerUser,loginUser, updateUserProfile, logoutUser, getDetails, getAllProducts, getProduct, getProductsByCategory, addItemsToCart, viewCartItems, addCartItemQty, subCartItemQty, deleteCartItem, deleteCart, rateAndReviewProduct, editProductReview, deleteProductReveiw, addToWishlist, viewWishlist, deleteWishlistProduct, deleteWishlist, buyCartProducts, getMyOrders, getOrderHistory, updateShippingDetails, getProfile, getShippingDetails, buyAgainOrders, getAllNotications, getNotificationById, getProductsBySearch } from "../controllers/user.controllers.js"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { getOrder, getProductReviews, viewGalleryImage, viewGalleryImages } from "../controllers/admin.controllers.js"
-import { getRecommendedExercisesByExerciseUserGoals, getRecommendedProductsByAgeHeightWeight, getRecommendedProductsByCityCountry, getRecommendedProductsByFrequentlyBuying, getRecommendedProductsByGoalGender, getRecommendedProductsByProductUserGoals, getRecommendedProductsByRecentlyPurchasedProducts, getRecommendedProductsByRecentlySearchedProducts, getRecommendedProductsByRecentlyViewedProducts, getRecommendedProductsByTop5PurchasedProducts } from "../recommendations/recommendation.controllers.js"
+import { getRecommendedExercisesByExerciseUserGoals, getRecommendedProductsByAgeHeightWeight, getRecommendedProductsByCityCountry, getRecommendedProductsByFrequentlyBuying, getRecommendedProductsByGoalGender, getRecommendedProductsByProductUserGoals, getRecommendedProductsByRecentlyPurchasedProducts, getRecommendedProductsByRecentlySearchedProducts, getRecommendedProductsByRecentlyViewedProducts, getRecommendedProductsByTimeLine, getRecommendedProductsByTop5PurchasedProducts } from "../recommendations/recommendation.controllers.js"
 
 const userRouter = Router()
 
@@ -118,6 +118,6 @@ userRouter.route("/view/products/recommendation/prevSearch").get(verifyJWT,getRe
 
 userRouter.route("/view/products/recommendation/top5Purchase").get(verifyJWT,getRecommendedProductsByTop5PurchasedProducts)
 
-
+userRouter.route("/view/products/recommendation/getByTime").get(verifyJWT,getRecommendedProductsByTimeLine)
 
 export default userRouter

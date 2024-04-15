@@ -285,7 +285,12 @@ const addProducts = asyncHandler(async(req,res)=>{
 
 
 const viewAllProducts = asyncHandler(async(req,res)=>{
-    const products = await Product.find();
+    const page = parseInt(req.query.page) || 1; 
+    const limit = 3;
+
+    const skip = (page - 1) * limit;
+
+    const products = await Product.find().skip(skip).limit(limit);
     if(products.length===0){
         throw new ApiError(401,"No products Found")
     }

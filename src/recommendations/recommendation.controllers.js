@@ -258,6 +258,51 @@ const getRecommendedProductsByRecentlySearchedProducts = asyncHandler(async(req,
 })
 
 
+const getRecommendedProductsByTimeLine = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
+    const currentDate = new Date();
+    const last7Days = new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const last2Weeks = new Date(currentDate.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate());
+
+    try {
+        const user = await User.findById(userId)
+        const recommendedProducts = {
+            last7Days: [],
+            last2Weeks: [],
+            lastMonth: []
+        };
+
+        user.orderHistory.forEach(order => {
+            if (order.createdAt >= last7Days) {
+                order.orderItems.forEach(item => {
+                    recommendedProducts.last7Days.push(item);
+                });
+            }
+            if (order.createdAt >= last2Weeks) {
+                order.orderItems.forEach(item => {
+                    recommendedProducts.last2Weeks.push(item);
+                });
+            }
+            if (order.createdAt >= lastMonth) {
+                order.orderItems.forEach(item => {
+                    recommendedProducts.lastMonth.push(item);
+                });
+            }
+        });
+
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200,recommendedProducts,"Products recommended")
+        );
+    } catch (error) {
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+
 
 export {
     getRecommendedProductsByAgeHeightWeight,
@@ -270,4 +315,5 @@ export {
     getRecommendedProductsByRecentlyPurchasedProducts,
     getRecommendedProductsByRecentlySearchedProducts,
     getRecommendedProductsByRecentlyViewedProducts,
+    getRecommendedProductsByTimeLine
 }
