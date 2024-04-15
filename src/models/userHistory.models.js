@@ -33,7 +33,16 @@ const userHistorySchema = new mongoose.Schema({
             type:mongoose.Schema.Types.Mixed,
             ref:"Product"
         }
-    ]
+    ],
+    startTime: {
+        type: Date,
+    },
+    endTime: {
+        type: Date
+    },
+    sessionDuration: {
+        type: Number
+    }
 },{
     timestamps:true
 })

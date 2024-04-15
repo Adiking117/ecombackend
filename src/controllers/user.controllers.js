@@ -10,7 +10,6 @@ import { Shipping } from "../models/shipping.models.js"
 import { Notification } from "../models/notifications.models.js"
 import { UserHistory } from "../models/userHistory.models.js"
 
-
 const generateUserAccessRefreshToken = async function(user_id){
     try {
         const user = await User.findById(user_id);
@@ -24,6 +23,25 @@ const generateUserAccessRefreshToken = async function(user_id){
     } catch (error) {
         throw new ApiError(500,error)
     }
+}
+
+const startSession = async function(userId) {
+    const session = await UserHistory.findOne({user:userId})
+    session.startTime = new Date()
+    await session.save();
+    return session;
+}
+
+const endSession = async function(userId) {
+    const session = await UserHistory.findOne({ user: userId });
+    session.endTime = new Date();
+    if (!session.sessionDuration === NaN) {
+        session.sessionDuration += (session.endTime - session.startTime);
+    }else{
+        session.sessionDuration = (session.endTime - session.startTime);
+    }
+    session.sessionDuration /= 60000
+    await session.save();
 }
 
 
@@ -100,6 +118,8 @@ const loginUser = asyncHandler(async(req,res)=>{
         httpOnly:true,
         // secure:true,
     }
+    await startSession(user._id);
+
 
     return res
     .status(200)
@@ -250,6 +270,8 @@ const getDetails = asyncHandler(async(req,res)=>{
 
 const logoutUser = asyncHandler(async(req,res)=>{
     console.log("logout controller", req.user)
+    await endSession(req.user._id);
+
     await User.findByIdAndUpdate(
         req.user._id,
         {
@@ -266,6 +288,7 @@ const logoutUser = asyncHandler(async(req,res)=>{
         httpOnly:true,
         secure:true,
     }
+
 
     return res
     .status(200)

@@ -172,7 +172,7 @@ const getRecommendedExercisesByExerciseUserGoals = asyncHandler(async(req,res)=>
 
 const getRecommendedProductsByProductUserGoals = asyncHandler(async(req,res)=>{
     const userProfile = await Profile.findById(req.user.userProfile);
-    const recommendedProducts = await Product.find({ productGoal: { $eq: userProfile.goal } });
+    const recommendedProducts = await Product.find({ productGoal: { $eq: userProfile.goal } }).limit(6);
     if(recommendedProducts.length === 0){
         throw new ApiError(400,"Fill your Profile")
     }
@@ -221,19 +221,13 @@ const getRecommendedProductsByTop5PurchasedProducts = asyncHandler(async (req, r
 
 const getRecommendedProductsByRecentlyPurchasedProducts = asyncHandler(async(req,res)=>{
     const user = req.user
-    const userHistory = await UserHistory.findOne({user:user._id})
-    console.log(userHistory)
-    if(userHistory.productsPurchased.length===0){
-        return res
-        .status(200)
-        .json(
-            new ApiResponse(200,{},"Recently you purchased no products")
-        )
-    }
+    const userHistory = await UserHistory.findOne({user:user._id})  
+    const recentlyPurchased = userHistory.productsPurchased.slice(-6);
+  
     return res
     .status(200)
     .json(
-        new ApiResponse(200,userHistory.productsPurchased,"Recently you purchased")
+        new ApiResponse(200,recentlyPurchased,"Recently you purchased")
     )
 })
 
@@ -244,17 +238,12 @@ const getRecommendedProductsByRecentlyViewedProducts = asyncHandler(async(req,re
     const recentViewedProducts = userHistory.productsViewed.filter((p)=>{
         return p.count >= 3
     })
-    if(recentViewedProducts.length===0){
-        return res
-        .status(200)
-        .json(
-            new ApiResponse(200,{},"Recently you Viewed no products")
-        )
-    }
+    const recentlyViewed = userHistory.productsViewed.slice(-6);
+
     return res
     .status(200)
     .json(
-        new ApiResponse(200,recentViewedProducts,"Recently you Viewed")
+        new ApiResponse(200,recentlyViewed,"Recently you Viewed")
     )
 })
 
@@ -262,17 +251,12 @@ const getRecommendedProductsByRecentlyViewedProducts = asyncHandler(async(req,re
 const getRecommendedProductsByRecentlySearchedProducts = asyncHandler(async(req,res)=>{
     const user = req.user
     const userHistory = await UserHistory.findOne({user:user._id})
-    if(userHistory.productsSearched.length===0){
-        return res
-        .status(200)
-        .json(
-            new ApiResponse(200,{},"Recently you Searched no products")
-        )
-    }
+    const recentlySearched = userHistory.productsPurchased.slice(-6);
+
     return res
     .status(200)
     .json(
-        new ApiResponse(200,userHistory.productsSearched,"Recently you Searched")
+        new ApiResponse(200,recentlySearched,"Recently you Searched")
     )
 })
 
