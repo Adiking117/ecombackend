@@ -8,6 +8,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { Order } from "../models/orders.models.js"
 import { Shipping } from "../models/shipping.models.js"
 import { Notification } from "../models/notifications.models.js"
+import { UserHistory } from "../models/userHistory.models.js"
 
 
 const generateUserAccessRefreshToken = async function(user_id){
@@ -53,6 +54,11 @@ const registerUser = asyncHandler(async(req,res)=>{
     }
 
     await user.save();
+
+    const userHistory = await UserHistory.create({
+        user:user._id
+    })
+    await userHistory.save();
 
     console.log("user  ",user)
 
@@ -316,6 +322,20 @@ const getProduct = asyncHandler(async(req,res)=>{
         inWishlist: isInWishlist,
         inCart: isInCart
     };
+    const userHistory = await UserHistory.findOne({user: user._id})
+    const existingIndex = userHistory.productsViewed.findIndex((p)=>{
+        return p.product._id.toString() === product._id.toString()
+    })
+    if (existingIndex !== -1) {
+        userHistory.productsViewed[existingIndex].count += 0.5
+    }else{
+        userHistory.productsViewed.push({
+            product:product,
+            count:0.5
+        })
+    }
+    await userHistory.save();
+
     return res
     .status(200)
     .json(
@@ -335,6 +355,40 @@ const getProductsByCategory = asyncHandler(async(req,res)=>{
         new ApiResponse(200,products,"Products filtered successfully")
     )
 })
+
+const getProductsBySearch = asyncHandler(async(req, res) => {
+    let searchQuery = req.query.name || '';
+    searchQuery = searchQuery.trim().toLowerCase();
+    if (!searchQuery) {
+        throw new ApiError(400, 'Invalid search query');
+    }
+    const products = await Product.find({ name:{ $regex: new RegExp(searchQuery, 'i') }});
+    if (products.length === 0) {
+        throw new ApiError(404, 'Products not found');
+    }
+    const userHistory = await UserHistory.findOne({user: req.user._id})
+    for(let i = 0 ; i<products.length ; i++){
+        const existingIndex = userHistory.productsSearched.findIndex((p) => {
+            return p._id.toString() === products[i]._id.toString()
+        });
+        if (existingIndex !== -1) {
+            userHistory.productsSearched.splice(existingIndex, 1);
+            userHistory.productsSearched.push(products[i]);
+        }else{
+            userHistory.productsSearched.push(products[i]);
+        }
+    }
+
+    await userHistory.save()
+    
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, products, 'Products searched successfully')
+    );
+});
+
+
 
 
 // Reviews
@@ -631,6 +685,7 @@ const deleteWishlist = asyncHandler(async(req,res)=>{
 // Orders
 const buyCartProducts = asyncHandler(async(req,res)=>{
     const user = await User.findById(req.user._id);
+    const userHistory = await UserHistory.findOne({user: user._id})
     // console.log("user" ,user)
     let orderItems = [];
     let tax = 0.18;
@@ -640,6 +695,11 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
         if(!productToBeOrdered){
             throw new ApiError(401,"Product not found")
         }
+        const existingIndex = userHistory.productsPurchased.findIndex(product => product._id.toString() === productToBeOrdered._id.toString());
+        if (existingIndex !== -1) {
+            userHistory.productsPurchased.splice(existingIndex, 1);
+        }
+        userHistory.productsPurchased.push(productToBeOrdered)
         const {name,image,price} = productToBeOrdered;
         const singleOrderItem = {
             name:name,
@@ -689,6 +749,8 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
     })
     user.notifications.push(notification2);
     await user.save();
+    await userHistory.save();
+
 
     return res
     .status(200)
@@ -794,6 +856,7 @@ export {
     getAllProducts,
     getProduct,
     getProductsByCategory,
+    getProductsBySearch,
     addItemsToCart,
     viewCartItems,
     addCartItemQty,

@@ -6,7 +6,7 @@ const exerciseSchema = new mongoose.Schema({
         required:true
     },
     bodyPart:{
-        type:String,
+        type:[String],
         required:true
     },
     description:{
@@ -18,7 +18,7 @@ const exerciseSchema = new mongoose.Schema({
         required:true
     },
     exerciseGoal:{
-        type:String,
+        type:[String],
         required:true
     },
     exerciseGif:{

@@ -11,6 +11,9 @@ import { UserDetails } from "../models/userDetails.models.js"
 import { Notification } from "../models/notifications.models.js"
 import { fileLocation,recommendations } from "../filelocation.js"
 import { spawn } from 'child_process';
+import { Exercise } from "../models/exercise.models.js"
+import { UserHistory } from "../models/userHistory.models.js"
+
 
 const getRecommendedProductsByAgeHeightWeight = asyncHandler(async (req, res) => {
     try {
@@ -149,10 +152,141 @@ const getRecommendedProductsByFrequentlyBuying = asyncHandler(async(req, res) =>
 });
 
 
+const getRecommendedExercisesByExerciseUserGoals = asyncHandler(async(req,res)=>{
+    const userProfile = await Profile.findById(req.user.userProfile)
+    const recommendedExercises = await Exercise.find({ exerciseGoal: { $in: [userProfile.goal] } });
+    // const exercises = await Exercise.find()
+    // const recommendedExercises = exercises.filter(exercise =>
+    //     exercise.exerciseGoal.includes(userProfile.goal)
+    // );
+    if(recommendedExercises.length === 0){
+        throw new ApiError(400,"Fill your Profile")
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,recommendedExercises,"Exercises as per your Goals recommended")
+    )
+})
+
+
+const getRecommendedProductsByProductUserGoals = asyncHandler(async(req,res)=>{
+    const userProfile = await Profile.findById(req.user.userProfile);
+    const recommendedProducts = await Product.find({ productGoal: { $eq: userProfile.goal } });
+    if(recommendedProducts.length === 0){
+        throw new ApiError(400,"Fill your Profile")
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,recommendedProducts,"Products as per your Goals recommended")
+    )
+})
+
+
+const getRecommendedProductsByTop5PurchasedProducts = asyncHandler(async (req, res) => {
+    try {
+        const pythonProcess = spawn('python', [`${recommendations}/top5PurchasedProducts.py`]);
+
+        let top5ProductsOfAllTime = [];
+
+        pythonProcess.stdout.on('data', async(data) => {
+            const productsArray = data.toString().trim().split(',');
+            for(let p of productsArray){
+                const product = await Product.findOne({name : p.trim()})
+                top5ProductsOfAllTime.push(product)
+            }
+        });
+
+        pythonProcess.stderr.on('data', (data) => {
+            console.error(`Python stderr: ${data}`);
+            res.status(500).json({ error: 'An error occurred while running the Python script' });
+        });
+
+        pythonProcess.on('close', (code) => {
+            if (code === 0) {
+                res.status(200).json(
+                    new ApiResponse(200,top5ProductsOfAllTime,"Top 5 products Fetched successfully")
+                );
+            } else {
+                res.status(500).json({ error: 'An error occurred while running the Python script' });
+            }
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'An error occurred' });
+    }
+});
+
+
+const getRecommendedProductsByRecentlyPurchasedProducts = asyncHandler(async(req,res)=>{
+    const user = req.user
+    const userHistory = await UserHistory.findOne({user:user._id})
+    console.log(userHistory)
+    if(userHistory.productsPurchased.length===0){
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200,{},"Recently you purchased no products")
+        )
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,userHistory.productsPurchased,"Recently you purchased")
+    )
+})
+
+
+const getRecommendedProductsByRecentlyViewedProducts = asyncHandler(async(req,res)=>{
+    const user = req.user
+    const userHistory = await UserHistory.findOne({user:user._id})
+    const recentViewedProducts = userHistory.productsViewed.filter((p)=>{
+        return p.count >= 3
+    })
+    if(recentViewedProducts.length===0){
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200,{},"Recently you Viewed no products")
+        )
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,recentViewedProducts,"Recently you Viewed")
+    )
+})
+
+
+const getRecommendedProductsByRecentlySearchedProducts = asyncHandler(async(req,res)=>{
+    const user = req.user
+    const userHistory = await UserHistory.findOne({user:user._id})
+    if(userHistory.productsSearched.length===0){
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200,{},"Recently you Searched no products")
+        )
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,userHistory.productsSearched,"Recently you Searched")
+    )
+})
+
+
 
 export {
     getRecommendedProductsByAgeHeightWeight,
     getRecommendedProductsByGoalGender,
     getRecommendedProductsByCityCountry,
-    getRecommendedProductsByFrequentlyBuying
+    getRecommendedProductsByFrequentlyBuying,
+    getRecommendedExercisesByExerciseUserGoals,
+    getRecommendedProductsByProductUserGoals,
+    getRecommendedProductsByTop5PurchasedProducts,
+    getRecommendedProductsByRecentlyPurchasedProducts,
+    getRecommendedProductsByRecentlySearchedProducts,
+    getRecommendedProductsByRecentlyViewedProducts,
 }
