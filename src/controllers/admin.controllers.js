@@ -286,7 +286,7 @@ const addProducts = asyncHandler(async(req,res)=>{
 
 const viewAllProducts = asyncHandler(async(req,res)=>{
     const page = parseInt(req.query.page) || 1; 
-    const limit = 3;
+    const limit = 5;
 
     const skip = (page - 1) * limit;
 

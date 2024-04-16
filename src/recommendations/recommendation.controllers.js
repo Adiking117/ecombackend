@@ -290,17 +290,35 @@ const getRecommendedProductsByTimeLine = asyncHandler(async (req, res) => {
         user.orderHistory.forEach(order => {
             if (order.createdAt >= last7Days) {
                 order.orderItems.forEach(item => {
-                    recommendedProducts.last7Days.push(item);
+                    const existingIndex = recommendedProducts.last7Days.findIndex(existingItem => existingItem.product.toString() === item.product.toString());
+                    if (existingIndex !== -1) {
+                        recommendedProducts.last7Days.splice(existingIndex, 1);
+                        recommendedProducts.last7Days.push(item);
+                    } else {
+                        recommendedProducts.last7Days.push(item);
+                    }
                 });
             }
             if (order.createdAt >= last2Weeks) {
                 order.orderItems.forEach(item => {
-                    recommendedProducts.last2Weeks.push(item);
+                    const existingIndex = recommendedProducts.last7Days.findIndex(existingItem => existingItem.product.toString() === item.product.toString());
+                    if (existingIndex !== -1) {
+                        recommendedProducts.last7Days.splice(existingIndex, 1);
+                        recommendedProducts.last7Days.push(item);
+                    } else {
+                        recommendedProducts.last7Days.push(item);
+                    }
                 });
             }
             if (order.createdAt >= lastMonth) {
                 order.orderItems.forEach(item => {
-                    recommendedProducts.lastMonth.push(item);
+                    const existingIndex = recommendedProducts.last7Days.findIndex(existingItem => existingItem.product.toString() === item.product.toString());
+                    if (existingIndex !== -1) {
+                        recommendedProducts.last7Days.splice(existingIndex, 1);
+                        recommendedProducts.last7Days.push(item);
+                    } else {
+                        recommendedProducts.last7Days.push(item);
+                    }
                 });
             }
         });
@@ -314,6 +332,7 @@ const getRecommendedProductsByTimeLine = asyncHandler(async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
 
 
 
