@@ -2,10 +2,17 @@ import { Router } from "express"
 
 import { registerUser,loginUser, updateUserProfile, logoutUser, getDetails, getAllProducts, getProduct, getProductsByCategory, addItemsToCart, viewCartItems, addCartItemQty, subCartItemQty, deleteCartItem, deleteCart, rateAndReviewProduct, editProductReview, deleteProductReveiw, addToWishlist, viewWishlist, deleteWishlistProduct, deleteWishlist, buyCartProducts, getMyOrders, getOrderHistory, updateShippingDetails, getProfile, getShippingDetails, buyAgainOrders, getAllNotications, getNotificationById, getProductsBySearch } from "../controllers/user.controllers.js"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
+import { start,end } from "../middlewares/session.middlewares.js"
 import { getOrder, getProductReviews, viewGalleryImage, viewGalleryImages } from "../controllers/admin.controllers.js"
 import { getRecommendedExercisesByExerciseUserGoals, getRecommendedProductsByAgeHeightWeight, getRecommendedProductsByCityCountry, getRecommendedProductsByFrequentlyBuying, getRecommendedProductsByGoalGender, getRecommendedProductsByProductUserGoals, getRecommendedProductsByRecentlyPurchasedProducts, getRecommendedProductsByRecentlySearchedProducts, getRecommendedProductsByRecentlyViewedProducts, getRecommendedProductsByTimeLine, getRecommendedProductsByTop5PurchasedProducts } from "../recommendations/recommendation.controllers.js"
 
 const userRouter = Router()
+
+userRouter.use((req, res, next) => {
+    start(req, res, () => {
+        end(req, res, next);
+    });
+});
 
 // Authorization
 userRouter.route("/register").post(registerUser)

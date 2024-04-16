@@ -5,13 +5,14 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
 import numpy as np
 import warnings
+import json
 
 # Ignore the warning
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
 from constants import excelLocation
 
 # Load the data
-data = pd.read_excel(excelLocation+"/user_details.xlsx")
+data = pd.read_excel(excelLocation + "/user_details.xlsx")
 
 # Preprocess the data
 label_encoders = {}
@@ -34,13 +35,12 @@ def recommend_products(city, country):
         encoded_data[column] = le.transform([country, city])[0] if country in le.classes_ and city in le.classes_ else -1
     scaled_data = scaler.transform(np.array([[encoded_data['Country'], encoded_data['City']]])) # Use np.array here
     predicted_cluster = kmeans.predict(scaled_data)[0]
-    cluster_products = data.groupby('kmclus')['Product'].value_counts().reset_index(name='count')
-    most_frequent_products = cluster_products.groupby('kmclus').first()
-    recommended_product = most_frequent_products.loc[predicted_cluster]['Product']
-    return recommended_product
+    cluster_products = data[data['kmclus'] == predicted_cluster]['Product']
+    top5_frequent_products = cluster_products.value_counts().head(5).index.tolist()
+    return top5_frequent_products
 
 if len(sys.argv) == 3:
     city = sys.argv[1]
     country = sys.argv[2]
-    recommended_product = recommend_products(city, country)
-    print(recommended_product)
+    top5_products = recommend_products(city, country)
+    print(json.dumps(top5_products))  # Output as JSON string

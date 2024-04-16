@@ -6,6 +6,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import LabelEncoder
 import numpy as np
 import warnings
+import json
 
 # Ignore the warning
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
@@ -13,7 +14,7 @@ warnings.filterwarnings("ignore", message="X does not have valid feature names")
 from constants import excelLocation
 
 # Load the data
-data2 = pd.read_excel(excelLocation+"/user_details.xlsx")
+data2 = pd.read_excel(excelLocation + "/user_details.xlsx")
 # GOAL, GENDER
 label_encoders2 = {}
 for column in ['Goal', 'Gender']:
@@ -33,16 +34,12 @@ def recommend_products_by_goal_gender(goal, gender):
         encoded_data2[column] = le.transform([goal, gender])[0] if goal in le.classes_ and gender in le.classes_ else -1
     scaled_data2 = scaler2.transform(np.array([[encoded_data2['Goal'], encoded_data2['Gender']]]))
     predicted_cluster2 = kmeans2.predict(scaled_data2)[0]
-    cluster_products2 = data2.groupby('kmclus2')['Product'].value_counts().reset_index(name='count')
-    most_frequent_products2 = cluster_products2.groupby('kmclus2').first()
-    try:
-        recommended_product2 = most_frequent_products2.loc[predicted_cluster2]['Product']
-    except KeyError:
-        recommended_product2 = "No product found for this cluster"
-    return recommended_product2
+    cluster_products2 = data2[data2['kmclus2'] == predicted_cluster2]['Product']
+    top5_frequent_products = cluster_products2.value_counts().head(5).index.tolist()
+    return top5_frequent_products
 
 if len(sys.argv) == 3:
     goal = sys.argv[1]
     gender = sys.argv[2]
-    recommended_product = recommend_products_by_goal_gender(goal, gender)
-    print(recommended_product)
+    top5_products = recommend_products_by_goal_gender(goal, gender)
+    print(json.dumps(top5_products))  # Output as JSON string

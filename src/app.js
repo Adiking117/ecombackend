@@ -6,7 +6,6 @@ import userRouter from './routes/user.routes.js';
 import adminRouter from './routes/admin.routes.js';
 
 import { IP } from './constants.js'
-
 const app = express();
 
 app.use(cors({

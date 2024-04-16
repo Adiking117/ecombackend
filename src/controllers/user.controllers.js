@@ -10,6 +10,7 @@ import { Shipping } from "../models/shipping.models.js"
 import { Notification } from "../models/notifications.models.js"
 import { UserHistory } from "../models/userHistory.models.js"
 
+
 const generateUserAccessRefreshToken = async function(user_id){
     try {
         const user = await User.findById(user_id);
@@ -35,12 +36,12 @@ const startSession = async function(userId) {
 const endSession = async function(userId) {
     const session = await UserHistory.findOne({ user: userId });
     session.endTime = new Date();
-    if (!session.sessionDuration === NaN) {
-        session.sessionDuration += (session.endTime - session.startTime);
-    }else{
-        session.sessionDuration = (session.endTime - session.startTime);
+    const sessionDuration = (session.endTime - session.startTime) / 60000;
+    if (!isNaN(session.sessionDuration)) {
+        session.sessionDuration += sessionDuration; 
+    } else {
+        session.sessionDuration = sessionDuration;
     }
-    session.sessionDuration /= 60000
     await session.save();
 }
 
@@ -118,7 +119,6 @@ const loginUser = asyncHandler(async(req,res)=>{
         httpOnly:true,
         // secure:true,
     }
-    await startSession(user._id);
 
 
     return res
@@ -136,10 +136,41 @@ const loginUser = asyncHandler(async(req,res)=>{
 })
 
 
+const logoutUser = asyncHandler(async(req,res)=>{
+    console.log("logout controller", req.user)
+
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $unset: {
+                refreshToken: 1 
+            }
+        },
+        {
+            new:true
+        }
+    )
+
+    const options = {
+        httpOnly:true,
+        secure:true,
+    }
+
+
+    return res
+    .status(200)
+    .clearCookie("accessToken",options)
+    .clearCookie("refreshToken",options)
+    .json(
+        new ApiResponse(200,`User logged out`)
+    )
+})
+
+
 const updateUserProfile = asyncHandler(async(req,res)=>{
     try {
-        // console.log("req user updateuserprofile",req.user)
-        // console.log("req body updateuserprofile",req.body)
+        //console.log("req user updateuserprofile",req.user)
+        //console.log("req body updateuserprofile",req.body)
 
         const { age, weight, height, goal, gender, country, city } = req.body;
     
@@ -147,7 +178,9 @@ const updateUserProfile = asyncHandler(async(req,res)=>{
           throw new ApiError(400, "All fields are required");
         }
         
-        let profile = await Profile.findById(req.user._id);
+        // let profile = await Profile.findById(req.user.userProfile.toString());
+        let profile = await Profile.findOne({user:req.user._id})
+        console.log(profile)
         
         if (!profile) {
           profile = new Profile({user: req.user._id,age,weight,height,goal,gender,country,city,});
@@ -182,6 +215,7 @@ const updateUserProfile = asyncHandler(async(req,res)=>{
         throw new ApiError(500,"Profile not updated")
       }
 })
+
 
 const updateShippingDetails = asyncHandler(async(req, res) => {
     const { address, city, state, country, pincode, phoneNo } = req.body;
@@ -236,6 +270,7 @@ const getShippingDetails = asyncHandler(async(req,res)=>{
     )
 })
 
+
 const getProfile = asyncHandler(async(req,res)=>{
     const profileDetails = await Profile.findOne( {user:req.user._id} )
     if(!profileDetails){
@@ -267,37 +302,6 @@ const getDetails = asyncHandler(async(req,res)=>{
     )
 })
 
-
-const logoutUser = asyncHandler(async(req,res)=>{
-    console.log("logout controller", req.user)
-    await endSession(req.user._id);
-
-    await User.findByIdAndUpdate(
-        req.user._id,
-        {
-            $unset: {
-                refreshToken: 1 
-            }
-        },
-        {
-            new:true
-        }
-    )
-
-    const options = {
-        httpOnly:true,
-        secure:true,
-    }
-
-
-    return res
-    .status(200)
-    .clearCookie("accessToken",options)
-    .clearCookie("refreshToken",options)
-    .json(
-        new ApiResponse(200,`User logged out`)
-    )
-})
 
 
 // Products
@@ -375,6 +379,7 @@ const getProduct = asyncHandler(async(req,res)=>{
     )
 })
 
+
 const getProductsByCategory = asyncHandler(async(req,res)=>{
     console.log(req.query)
     const products = await Product.find({ category:req.query.category })
@@ -387,6 +392,7 @@ const getProductsByCategory = asyncHandler(async(req,res)=>{
         new ApiResponse(200,products,"Products filtered successfully")
     )
 })
+
 
 const getProductsBySearch = asyncHandler(async(req, res) => {
     let searchQuery = req.query.name || '';
@@ -457,6 +463,7 @@ const rateAndReviewProduct = asyncHandler(async (req, res) => {
     );
 });
 
+
 const editProductReview = asyncHandler(async(req,res)=>{
     const { rating, comment } = req.body;
     const { productId, reviewId } = req.params;
@@ -496,6 +503,7 @@ const editProductReview = asyncHandler(async(req,res)=>{
         new ApiResponse(200, productReviewToBeEdited.reviews , "Review edited successfully")
     );
 });
+
 
 const deleteProductReveiw = asyncHandler(async(req,res)=>{
     const {productId,reviewId} = req.params;
@@ -567,6 +575,7 @@ const addItemsToCart = asyncHandler(async(req,res)=>{
     )
 })
 
+
 const viewCartItems = asyncHandler(async(req,res)=>{
     const user = await User.findById(req.user.id)
     if(!user){
@@ -580,6 +589,7 @@ const viewCartItems = asyncHandler(async(req,res)=>{
         new ApiResponse(200,cartItems,"Cart Products fetched successfully")
     )
 })
+
 
 const addCartItemQty = asyncHandler(async(req,res)=>{
     const productid = req.params.id
@@ -595,6 +605,7 @@ const addCartItemQty = asyncHandler(async(req,res)=>{
     )
 })
 
+
 const subCartItemQty = asyncHandler(async(req,res)=>{
     const productid = req.params.id
     if(!productid){
@@ -608,6 +619,7 @@ const subCartItemQty = asyncHandler(async(req,res)=>{
         new ApiResponse(200,user.cart,"Quantity removed Successfully")
     )
 })
+
 
 const deleteCartItem = asyncHandler(async(req,res)=>{
     const productid = req.params.id
@@ -623,6 +635,7 @@ const deleteCartItem = asyncHandler(async(req,res)=>{
     )
 })
 
+
 const deleteCart = asyncHandler(async(req,res)=>{
     const user = req.user
     user.cart = []
@@ -633,6 +646,7 @@ const deleteCart = asyncHandler(async(req,res)=>{
         new ApiResponse(200,user.cart,"Cart Emptied Successfully")
     )
 })
+
 
 
 // Wishlist
@@ -665,6 +679,7 @@ const addToWishlist = asyncHandler(async(req,res)=>{
     )
 })
 
+
 const viewWishlist = asyncHandler(async(req,res)=>{
     const userId = req.user.id
     const user = await User.findById(userId)
@@ -678,6 +693,7 @@ const viewWishlist = asyncHandler(async(req,res)=>{
         new ApiResponse(200,user.wishlist,"User Wishlist fetched successfully")
     )
 })
+
 
 const deleteWishlistProduct = asyncHandler(async(req,res)=>{
     const productId = req.params.id
@@ -701,6 +717,7 @@ const deleteWishlistProduct = asyncHandler(async(req,res)=>{
         new ApiResponse(200,user.wishlist,"Product removed from wishlist")
     )
 })
+
 
 const deleteWishlist = asyncHandler(async(req,res)=>{
     const user = req.user
@@ -837,6 +854,7 @@ const buyAgainOrders = asyncHandler(async(req,res)=>{
 })
 
 
+
 // Notification
 const getAllNotications = asyncHandler(async(req,res)=>{
     const userNotifications = await Notification.find( {user: req.user._id })
@@ -846,6 +864,7 @@ const getAllNotications = asyncHandler(async(req,res)=>{
         new ApiResponse(200,userNotifications,"Notifications fetched successfully")
     )
 })
+
 
 const getNotificationById = asyncHandler(async(req,res)=>{
     const userId = req.user._id;
@@ -877,6 +896,8 @@ const getNotificationById = asyncHandler(async(req,res)=>{
 });
 
 export {
+    startSession,
+    endSession,
     registerUser,
     loginUser,
     updateUserProfile,

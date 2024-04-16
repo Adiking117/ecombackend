@@ -19,11 +19,12 @@ const getRecommendedProductsByAgeHeightWeight = asyncHandler(async (req, res) =>
     try {
         const userProfile = await Profile.findOne( { user: req.user._id } )
         const { age,height,weight } = userProfile
-        let recommendedProduct = '';
+        let recommendedProducts = [];
 
         const pythonProcess = spawn('python', [`${recommendations}/ageHeightWeight.py`, age, height, weight]);
         pythonProcess.stdout.on('data', (data) => {
-            recommendedProduct += data.toString().trim();
+            const productsArray = JSON.parse(data.toString().trim());
+            recommendedProducts = productsArray;
         });
 
         pythonProcess.stderr.on('data', (data) => {
@@ -32,9 +33,13 @@ const getRecommendedProductsByAgeHeightWeight = asyncHandler(async (req, res) =>
         });
 
         pythonProcess.on('close', async(code) => {
-            const productToBeRecommended = await Product.findOne( { name:recommendedProduct })
+            let productsToBeRecommended = [];
+            for(const pname of recommendedProducts){
+                const product = await Product.findOne({name:pname})
+                productsToBeRecommended.push(product)
+            }
             res.status(200).json(
-                new ApiResponse(200,productToBeRecommended,"Product recommeded successfully")
+                new ApiResponse(200,productsToBeRecommended,"Product recommeded successfully")
             );
         });
     } catch (error) {
@@ -49,12 +54,12 @@ const getRecommendedProductsByGoalGender = asyncHandler(async (req, res) => {
         const userProfile = await Profile.findOne({ user: req.user._id });
         const { goal, gender } = userProfile;
 
-        let recommendedProduct = '';
+        let recommendedProducts = [];
 
         const pythonProcess = spawn('python', [`${recommendations}/goalGender.py`, goal, gender]);
 
         pythonProcess.stdout.on('data', (data) => {
-            recommendedProduct += data.toString().trim();
+            recommendedProducts = JSON.parse(data.toString().trim());
         });
 
         pythonProcess.stderr.on('data', (data) => {
@@ -63,9 +68,13 @@ const getRecommendedProductsByGoalGender = asyncHandler(async (req, res) => {
         });
 
         pythonProcess.on('close', async(code) => {
-            const productToBeRecommended = await Product.findOne( { name:recommendedProduct })
-            res.status(200).json(
-                new ApiResponse(200, productToBeRecommended, "Product recommended successfully")
+            let productsToBeRecommended = [];
+            for (const pname of recommendedProducts) {
+                const product = await Product.findOne({ name: pname })
+                productsToBeRecommended.push(product)
+            }
+            return res.status(200).json(
+                new ApiResponse(200, productsToBeRecommended, "Product recommended successfully")
             );
         });
     } catch (error) {
@@ -75,17 +84,17 @@ const getRecommendedProductsByGoalGender = asyncHandler(async (req, res) => {
 });
 
 
-const getRecommendedProductsByCityCountry = asyncHandler(async(req,res)=>{
+const getRecommendedProductsByCityCountry = asyncHandler(async (req, res) => {
     try {
         const userProfile = await Profile.findOne({ user: req.user._id });
         const { city, country } = userProfile;
 
-        let recommendedProduct = '';
+        let recommendedProducts = [];
 
         const pythonProcess = spawn('python', [`${recommendations}/cityCountry.py`, city, country]);
 
         pythonProcess.stdout.on('data', (data) => {
-            recommendedProduct += data.toString().trim();
+            recommendedProducts = JSON.parse(data.toString().trim());
         });
 
         pythonProcess.stderr.on('data', (data) => {
@@ -93,18 +102,22 @@ const getRecommendedProductsByCityCountry = asyncHandler(async(req,res)=>{
             res.status(500).json({ error: 'An error occurred while running the Python script' });
         });
 
-        pythonProcess.on('close', async(code) => {
-            const productToBeRecommended = await Product.findOne( { name:recommendedProduct })
-
+        pythonProcess.on('close', async (code) => {
+            let productsToBeRecommended = [];
+            for (const pname of recommendedProducts) {
+                const product = await Product.findOne({ name: pname })
+                productsToBeRecommended.push(product)
+            }
             res.status(200).json(
-                new ApiResponse(200, productToBeRecommended, "Product recommended successfully")
+                new ApiResponse(200, productsToBeRecommended, "Product recommended successfully")
             );
         });
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ error: 'An error occurred' });
     }
-})
+});
+
 
 
 const getRecommendedProductsByFrequentlyBuying = asyncHandler(async(req, res) => {
