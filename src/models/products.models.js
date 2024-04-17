@@ -48,7 +48,7 @@ const productSchema = new mongoose.Schema({
         required:true
     },
     weight:{
-        type:Number,
+        type:String,
     },
     productGoal:{
         type:String,
