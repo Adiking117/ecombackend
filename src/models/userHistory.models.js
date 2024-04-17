@@ -7,8 +7,13 @@ const userHistorySchema = new mongoose.Schema({
     },
     productsPurchased:[
         {
-            type:mongoose.Schema.Types.Mixed,
-            ref:"Product"
+            product:{
+                type:mongoose.Schema.Types.Mixed,
+                ref:"Product"
+            },
+            addedAt:{
+                type:Date
+            }
         }
     ],
     productsViewed:[

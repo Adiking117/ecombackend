@@ -744,11 +744,18 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
         if(!productToBeOrdered){
             throw new ApiError(401,"Product not found")
         }
-        const existingIndex = userHistory.productsPurchased.findIndex(product => product._id.toString() === productToBeOrdered._id.toString());
-        if (existingIndex !== -1) {
-            userHistory.productsPurchased.splice(existingIndex, 1);
+        
+        const existingProductIndex = userHistory.productsPurchased.findIndex(p => p.product._id.toString() === productToBeOrdered._id.toString());
+
+        if (existingProductIndex !== -1) {
+            userHistory.productsPurchased.splice(existingProductIndex, 1);
         }
-        userHistory.productsPurchased.push(productToBeOrdered)
+
+        userHistory.productsPurchased.push({
+            product: productToBeOrdered.toObject(),
+            addedAt: Date.now()
+        });
+
         const {name,image,price} = productToBeOrdered;
         const singleOrderItem = {
             name:name,
