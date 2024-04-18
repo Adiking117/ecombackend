@@ -592,106 +592,8 @@ const appendUserDetailsToExcel = async (user, userProfile, shippingProfile, prod
 
 
 // employee
-// const viewGreviences = asyncHandler(async(req,res)=>{
-//     const greviences = await Greviences.find().populate('user',"firstName lastName");
-//     return res
-//     .status(200)
-//     .json(
-//         new ApiResponse(200,greviences,"All Greviences Fetched successfully")
-//     )
-// })
-
-
-// const viewUserGrevience = asyncHandler(async(req,res)=>{
-//     const grevience = await Greviences.findById(req.params.id).populate('user','firstName lastName');
-//     return res
-//     .status(200)
-//     .json(
-//         new ApiResponse(200,grevience,"Grevience Fetched successfully")
-//     )
-// })
-
-
-// const responseForEmployement = asyncHandler(async(req,res)=>{
-//     const grevience = await Greviences.findById(req.params.id).populate('user','userName role notifications');
-//     const { answer } = req.body;
-//     if(answer === "Yes"){
-//         grevience.user.role = 'employee'
-//         const notification = await Notification.create({
-//             user:grevience.user._id,
-//             message: "Congratulations You are Selected for Job"
-//         })
-//         grevience.user.notifications.push(notification.toObject())
-//     }else{
-//         const notification = await Notification.create({
-//             user:grevience.user._id,
-//             message: "Unfortunately Your Application was rejected , No job"
-//         })
-//         grevience.user.notifications.push(notification.toObject())
-//     }
-//     await grevience.user.save();
-
-//     return res
-//     .status(200)
-//     .json(
-//         new ApiResponse(200,grevience,"Response Sent Successfully")
-//     )
-// })
-
-
-// const getAllAvailableDeliveryPartners = asyncHandler(async(req,res)=>{
-//     const order = await Order.findById(req.params.id).populate('user','userName')
-//     const deliveryPartners = await User.find({role:'employee'}).populate('userProfile','city')
-
-//     const listOfAvailableDeliveryPartners = deliveryPartners.filter(async(dp)=>{
-//        return dp.userProfile.city === order.shippingInfo.city
-//     })
-    
-//     return res
-//     .status(200)
-//     .json(
-//         new ApiResponse(200,listOfAvailableDeliveryPartners,"Delivery Partners fetched successfully")
-//     )
-// })
-
-
-// const assignOrder = asyncHandler(async(req,res)=>{
-//     const orderId = req.params.orderId
-//     const empId = req.params.empId
-//     const order = await Order.findById(orderId).populate('user','userName notifications')
-//     const emp = await User.findById(empId)
-//     console.log(order)
-
-//     emp.notifications.push({
-//         user:emp._id,
-//         message: "New Order Assigned"
-//     })
-//     emp.orders.push(order.toObject())
-//     await emp.save();
-
-//     order.user.notifications.push({
-//         user:order.user._id,
-//         message: `Your Order has been shipped and will be delivered by ${emp.userName}`
-//     })
-//     await order.user.save();
-
-//     order.orderStatus = "Shipping";
-//     const deliveryDate = new Date();
-//     deliveryDate.setDate(deliveryDate.getDate() + 2);
-//     order.deliveredAt = deliveryDate;
-//     order.deliveredBy = emp._id;
-//     await order.save();
-
-//     return res
-//     .status(200)
-//     .json(
-//         new ApiResponse(200,order,"Order Assigned Successfully")
-//     )
-// })
-
-
 const viewGreviences = asyncHandler(async(req,res)=>{
-    const greviences = await Greviences.find();
+    const greviences = await Greviences.find().populate('user',"firstName lastName");
     return res
     .status(200)
     .json(
@@ -701,7 +603,7 @@ const viewGreviences = asyncHandler(async(req,res)=>{
 
 
 const viewUserGrevience = asyncHandler(async(req,res)=>{
-    const grevience = await Greviences.findById(req.params.id);
+    const grevience = await Greviences.findById(req.params.id).populate('user','firstName lastName');
     return res
     .status(200)
     .json(
@@ -711,41 +613,38 @@ const viewUserGrevience = asyncHandler(async(req,res)=>{
 
 
 const responseForEmployement = asyncHandler(async(req,res)=>{
-    const grevience = await Greviences.findById(req.params.id).populate('user','userName');
+    const grevience = await Greviences.findById(req.params.id).populate('user','userName role notifications');
     const { answer } = req.body;
-    const userWhoSentGrevience = await User.findById(grevience.user);
     if(answer === "Yes"){
-        userWhoSentGrevience.role = 'employee'
-        userWhoSentGrevience.notifications.push({
-            user:userWhoSentGrevience._id,
+        grevience.user.role = 'employee'
+        const notification = await Notification.create({
+            user:grevience.user._id,
             message: "Congratulations You are Selected for Job"
         })
+        grevience.user.notifications.push(notification.toObject())
     }else{
-        userWhoSentGrevience.notifications.push({
-            user:userWhoSentGrevience._id,
+        const notification = await Notification.create({
+            user:grevience.user._id,
             message: "Unfortunately Your Application was rejected , No job"
         })
+        grevience.user.notifications.push(notification.toObject())
     }
-    await userWhoSentGrevience.save();
+    await grevience.user.save();
 
     return res
     .status(200)
     .json(
-        new ApiResponse(200,userWhoSentGrevience,"Response Sent Successfully")
+        new ApiResponse(200,grevience,"Response Sent Successfully")
     )
 })
 
 
 const getAllAvailableDeliveryPartners = asyncHandler(async(req,res)=>{
-    const order = await Order.findById(req.params.id)
-    const userId = order.user;
-    const user = await User.findById(userId)
-    const userShipping = await Shipping.findById(user.shippingInfo)
+    const order = await Order.findById(req.params.id).populate('user','userName')
+    const deliveryPartners = await User.find({role:'employee'}).populate('userProfile','city')
 
-    const deliveryPartners = await User.find({role:'employee'})
     const listOfAvailableDeliveryPartners = deliveryPartners.filter(async(dp)=>{
-        const dplocation = await Shipping.findById(dp.shippingInfo)
-        return dplocation.city === userShipping.city
+       return dp.userProfile.city === order.shippingInfo.city
     })
     
     return res
@@ -757,11 +656,11 @@ const getAllAvailableDeliveryPartners = asyncHandler(async(req,res)=>{
 
 
 const assignOrder = asyncHandler(async(req,res)=>{
-    const { orderId , empId } = req.params.id
-    const order = await Order.findById(orderId)
-    const userId = order.user;
-    const user = await User.findById(userId)
+    const orderId = req.params.orderId
+    const empId = req.params.empId
+    const order = await Order.findById(orderId).populate('user','userName notifications')
     const emp = await User.findById(empId)
+    console.log(order)
 
     emp.notifications.push({
         user:emp._id,
@@ -770,11 +669,11 @@ const assignOrder = asyncHandler(async(req,res)=>{
     emp.orders.push(order.toObject())
     await emp.save();
 
-    user.notifications.push({
-        user:user._id,
+    order.user.notifications.push({
+        user:order.user._id,
         message: `Your Order has been shipped and will be delivered by ${emp.userName}`
     })
-    await user.save();
+    await order.user.save();
 
     order.orderStatus = "Shipping";
     const deliveryDate = new Date();
@@ -789,6 +688,107 @@ const assignOrder = asyncHandler(async(req,res)=>{
         new ApiResponse(200,order,"Order Assigned Successfully")
     )
 })
+
+
+// const viewGreviences = asyncHandler(async(req,res)=>{
+//     const greviences = await Greviences.find();
+//     return res
+//     .status(200)
+//     .json(
+//         new ApiResponse(200,greviences,"All Greviences Fetched successfully")
+//     )
+// })
+
+
+// const viewUserGrevience = asyncHandler(async(req,res)=>{
+//     const grevience = await Greviences.findById(req.params.id);
+//     return res
+//     .status(200)
+//     .json(
+//         new ApiResponse(200,grevience,"Grevience Fetched successfully")
+//     )
+// })
+
+
+// const responseForEmployement = asyncHandler(async(req,res)=>{
+//     const grevience = await Greviences.findById(req.params.id).populate('user','userName');
+//     const { answer } = req.body;
+//     const userWhoSentGrevience = await User.findById(grevience.user);
+//     if(answer === "Yes"){
+//         userWhoSentGrevience.role = 'employee'
+//         userWhoSentGrevience.notifications.push({
+//             user:userWhoSentGrevience._id,
+//             message: "Congratulations You are Selected for Job"
+//         })
+//     }else{
+//         userWhoSentGrevience.notifications.push({
+//             user:userWhoSentGrevience._id,
+//             message: "Unfortunately Your Application was rejected , No job"
+//         })
+//     }
+//     await userWhoSentGrevience.save();
+
+//     return res
+//     .status(200)
+//     .json(
+//         new ApiResponse(200,userWhoSentGrevience,"Response Sent Successfully")
+//     )
+// })
+
+
+// const getAllAvailableDeliveryPartners = asyncHandler(async(req,res)=>{
+//     const order = await Order.findById(req.params.id)
+//     const userId = order.user;
+//     const user = await User.findById(userId)
+//     const userShipping = await Shipping.findById(user.shippingInfo)
+
+//     const deliveryPartners = await User.find({role:'employee'})
+//     const listOfAvailableDeliveryPartners = deliveryPartners.filter(async(dp)=>{
+//         const dplocation = await Shipping.findById(dp.shippingInfo)
+//         return dplocation.city === userShipping.city
+//     })
+    
+//     return res
+//     .status(200)
+//     .json(
+//         new ApiResponse(200,listOfAvailableDeliveryPartners,"Delivery Partners fetched successfully")
+//     )
+// })
+
+
+// const assignOrder = asyncHandler(async(req,res)=>{
+//     const { orderId , empId } = req.params.id
+//     const order = await Order.findById(orderId)
+//     const userId = order.user;
+//     const user = await User.findById(userId)
+//     const emp = await User.findById(empId)
+
+//     emp.notifications.push({
+//         user:emp._id,
+//         message: "New Order Assigned"
+//     })
+//     emp.orders.push(order.toObject())
+//     await emp.save();
+
+//     user.notifications.push({
+//         user:user._id,
+//         message: `Your Order has been shipped and will be delivered by ${emp.userName}`
+//     })
+//     await user.save();
+
+//     order.orderStatus = "Shipping";
+//     const deliveryDate = new Date();
+//     deliveryDate.setDate(deliveryDate.getDate() + 2);
+//     order.deliveredAt = deliveryDate;
+//     order.deliveredBy = emp._id;
+//     await order.save();
+
+//     return res
+//     .status(200)
+//     .json(
+//         new ApiResponse(200,order,"Order Assigned Successfully")
+//     )
+// })
 
 
 
