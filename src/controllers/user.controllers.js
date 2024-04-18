@@ -902,6 +902,17 @@ const getNotificationById = asyncHandler(async(req,res)=>{
     );
 });
 
+
+const deleteNotificationById = asyncHandler(async(req,res)=>{
+
+})
+
+
+const deleteAllNotifications = asyncHandler(async(req,res)=>{
+
+})
+
+
 export {
     startSession,
     endSession,

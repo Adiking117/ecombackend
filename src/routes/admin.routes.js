@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { upload } from "../middlewares/multer.middlewares.js"
-import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, giveOrderDeliveryDays, completeOrder, getPlacedOrders, getDeliveredOrders, addExercises, veiwAllExercises, viewExercise, deleteExercise } from "../controllers/admin.controllers.js";
+import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, giveOrderDeliveryDays, completeOrder, getPlacedOrders, getDeliveredOrders, addExercises, veiwAllExercises, viewExercise, deleteExercise, viewGreviences, viewUserGrevience, responseForEmployement, getAllAvailableDeliveryPartners, assignOrder } from "../controllers/admin.controllers.js";
 
 const adminRouter = Router();
 
@@ -124,9 +124,18 @@ adminRouter.route("/view/orders/delivered").get(verifyJWT,authorizeRoles(["admin
 
 adminRouter.route("/view/orders/:id").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getOrder)
 
-adminRouter.route("/view/orders/:id/giveEstimateDays").put(verifyJWT,authorizeRoles(["admin","superadmin"]),giveOrderDeliveryDays)
-
 adminRouter.route("/view/orders/:id/complete").put(verifyJWT,authorizeRoles(["admin","superadmin"]),completeOrder)
 
+
+// employee
+adminRouter.route("/view/greviences").get(verifyJWT,authorizeRoles(["admin","superadmin"]),viewGreviences)
+
+adminRouter.route("/view/greviences/:id").get(verifyJWT,authorizeRoles(["admin","superadmin"]),viewUserGrevience)
+
+adminRouter.route("/view/greviences/:id/response").put(verifyJWT,authorizeRoles(["admin","superadmin"]),responseForEmployement)
+
+adminRouter.route("/view/orders/:id/getDelBoys").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getAllAvailableDeliveryPartners)
+
+adminRouter.route("/view/orders/:orderId/assign/:empId").get(verifyJWT,authorizeRoles(["admin","superadmin"]),assignOrder)
 
 export default adminRouter

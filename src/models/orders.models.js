@@ -45,7 +45,7 @@ const orderSchema = new mongoose.Schema({
     },
     orderStatus:{
         type:String,
-        enum:["Placed","Delivered"],
+        enum:["Placed","Shipping","Approved","Delivered"],
         default:"Placed"
     },
     shippingInfo:{
@@ -55,6 +55,10 @@ const orderSchema = new mongoose.Schema({
     deliveredAt: {
         type:Date,
     },
+    deliveredBy:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"User"
+    }
 },{
     timestamps:true
 })

@@ -5,6 +5,7 @@ import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { start,end } from "../middlewares/session.middlewares.js"
 import { getOrder, getProductReviews, viewGalleryImage, viewGalleryImages } from "../controllers/admin.controllers.js"
 import { getRecommendedExercisesByExerciseUserGoals, getRecommendedProductsByAgeHeightWeight, getRecommendedProductsByCityCountry, getRecommendedProductsByFrequentlyBuying, getRecommendedProductsByGoalGender, getRecommendedProductsByProductUserGoals, getRecommendedProductsByRecentlyPurchasedProducts, getRecommendedProductsByRecentlySearchedProducts, getRecommendedProductsByRecentlyViewedProducts, getRecommendedProductsByTimeLine, getRecommendedProductsByTop5PurchasedProducts } from "../recommendations/recommendation.controllers.js"
+import { requestAdminForEmployement } from "../controllers/employee.controllers.js"
 
 const userRouter = Router()
 
@@ -87,7 +88,7 @@ userRouter.route("/view/wishlist/:id/moveToCart").put(verifyJWT,addItemsToCart)
 
 
 // order
-userRouter.route("/buy/products").post(verifyJWT,buyCartProducts)
+userRouter.route("/buy/products").post(verifyJWT,authorizeRoles(["user"]),buyCartProducts)
 
 userRouter.route("/view/orders").get(verifyJWT,getMyOrders)
 
@@ -126,5 +127,9 @@ userRouter.route("/view/products/recommendation/prevSearch").get(verifyJWT,getRe
 userRouter.route("/view/products/recommendation/top5Purchase").get(verifyJWT,getRecommendedProductsByTop5PurchasedProducts)
 
 userRouter.route("/view/products/recommendation/getByTime").get(verifyJWT,getRecommendedProductsByTimeLine)
+
+
+// employee
+userRouter.route("/greviences/send").post(verifyJWT,requestAdminForEmployement)
 
 export default userRouter

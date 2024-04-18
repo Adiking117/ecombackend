@@ -14,6 +14,7 @@ import { Notification } from "../models/notifications.models.js"
 import * as fs from 'fs';
 import { fileLocation } from "../filelocation.js"
 import { Exercise } from "../models/exercise.models.js"
+import { Greviences } from "../models/greviences.models.js"
 
 
 
@@ -469,32 +470,6 @@ const getOrder = asyncHandler(async(req,res)=>{
 })
 
 
-const giveOrderDeliveryDays = asyncHandler(async(req,res)=>{
-    const { days } = req.body;
-    const order = await Order.findById(req.params.id)
-    const userId = order.user;
-    const user = await User.findById(userId)
-    const deliveryDate = new Date();
-    deliveryDate.setDate(deliveryDate.getDate() + days);
-    order.deliveredAt = deliveryDate;
-
-    await order.save();
-
-    const notification = await Notification.create({
-        user:userId,
-        message: `Your Order is confirmed and will be delivered in ${days} days at ${order.deliveredAt}`
-    })
-    user.notifications.push(notification);
-    await user.save();
-
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200,{},"Notification sent successfully")
-    )
-})
-
-
 const completeOrder = asyncHandler(async(req,res)=>{
     const orderId = req.params.id;
     const order = await Order.findById(orderId);
@@ -616,6 +591,107 @@ const appendUserDetailsToExcel = async (user, userProfile, shippingProfile, prod
 
 
 
+// employee
+const viewGreviences = asyncHandler(async(req,res)=>{
+    const greviences = await Greviences.find();
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,greviences,"All Greviences Fetched successfully")
+    )
+})
+
+
+const viewUserGrevience = asyncHandler(async(req,res)=>{
+    const grevience = await Greviences.findById(req.params.id);
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,grevience,"Grevience Fetched successfully")
+    )
+})
+
+
+const responseForEmployement = asyncHandler(async(req,res)=>{
+    const grevience = await Greviences.findById(req.params.id);
+    const { answer } = req.body;
+    const userWhoSentGrevience = await User.findById(grevience.user);
+    if(answer === "Yes"){
+        userWhoSentGrevience.role = 'employee'
+        userWhoSentGrevience.notifications.push({
+            user:userWhoSentGrevience._id,
+            message: "Congratulations You are Selected for Job"
+        })
+    }else{
+        userWhoSentGrevience.notifications.push({
+            user:userWhoSentGrevience._id,
+            message: "Unfortunately Your Application was rejected , No job"
+        })
+    }
+    await userWhoSentGrevience.save();
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,userWhoSentGrevience,"Response Sent Successfully")
+    )
+})
+
+
+const getAllAvailableDeliveryPartners = asyncHandler(async(req,res)=>{
+    const order = await Order.findById(req.params.id)
+    const userId = order.user;
+    const user = await User.findById(userId)
+    const userProfile = await Profile.findById(user.userProfile)
+
+    const deliveryPartners = await User.find({role:'employee'})
+    const listOfAvailableDeliveryPartners = deliveryPartners.filter(async(dp)=>{
+        const dplocation = await Profile.findById(dp.userProfile)
+        return dplocation.city === userProfile.city
+    })
+    
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,listOfAvailableDeliveryPartners,"Delivery Partners fetched successfully")
+    )
+})
+
+
+const assignOrder = asyncHandler(async(req,res)=>{
+    const { orderId , empId } = req.params.id
+    const order = await Order.findById(orderId)
+    const userId = order.user;
+    const user = await User.findById(userId)
+    const emp = await User.findById(empId)
+
+    emp.notifications.push({
+        user:emp._id,
+        message: "New Order Assigned"
+    })
+    emp.orders.push(order.toObject())
+    await emp.save();
+
+    user.notifications.push({
+        user:user._id,
+        message: `Your Order has been shipped and will be delivered by ${emp.userName}`
+    })
+    await user.save();
+
+    order.orderStatus = "Shipping";
+    order.deliveredBy = emp._id;
+    await order.save();
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,order,"Order Assigned Successfully")
+    )
+})
+
+
+
+
 export{
     getAllUser,
     getUser,
@@ -641,6 +717,10 @@ export{
     getOrder,
     getPlacedOrders,
     getDeliveredOrders,
-    giveOrderDeliveryDays,
-    completeOrder
+    completeOrder,
+    viewGreviences,
+    viewUserGrevience,
+    responseForEmployement,
+    getAllAvailableDeliveryPartners,
+    assignOrder
 }
