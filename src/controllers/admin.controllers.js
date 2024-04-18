@@ -617,15 +617,17 @@ const responseForEmployement = asyncHandler(async(req,res)=>{
     const { answer } = req.body;
     if(answer === "Yes"){
         grevience.user.role = 'employee'
-        grevience.user.notifications.push({
+        const notification = await Notification.create({
             user:grevience.user._id,
             message: "Congratulations You are Selected for Job"
         })
+        grevience.user.notifications.push(notification.toObject())
     }else{
-        grevience.user.notifications.push({
+        const notification = await Notification.create({
             user:grevience.user._id,
             message: "Unfortunately Your Application was rejected , No job"
         })
+        grevience.user.notifications.push(notification.toObject())
     }
     await grevience.user.save();
 
