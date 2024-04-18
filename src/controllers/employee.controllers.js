@@ -35,7 +35,7 @@ const requestAdminForEmployement = asyncHandler(async(req,res)=>{
 
 
 const sendOtpToUser = asyncHandler(async(req,res)=>{
-
+    
 })
 
 

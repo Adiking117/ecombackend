@@ -593,7 +593,7 @@ const appendUserDetailsToExcel = async (user, userProfile, shippingProfile, prod
 
 // employee
 const viewGreviences = asyncHandler(async(req,res)=>{
-    const greviences = await Greviences.find();
+    const greviences = await Greviences.find().populate('user',"firstName lastName");
     return res
     .status(200)
     .json(
@@ -603,7 +603,7 @@ const viewGreviences = asyncHandler(async(req,res)=>{
 
 
 const viewUserGrevience = asyncHandler(async(req,res)=>{
-    const grevience = await Greviences.findById(req.params.id);
+    const grevience = await Greviences.findById(req.params.id).populate('user','firstName lastName');
     return res
     .status(200)
     .json(
@@ -613,7 +613,7 @@ const viewUserGrevience = asyncHandler(async(req,res)=>{
 
 
 const responseForEmployement = asyncHandler(async(req,res)=>{
-    const grevience = await Greviences.findById(req.params.id);
+    const grevience = await Greviences.findById(req.params.id).populate('user','userName');
     const { answer } = req.body;
     const userWhoSentGrevience = await User.findById(grevience.user);
     if(answer === "Yes"){
@@ -642,12 +642,12 @@ const getAllAvailableDeliveryPartners = asyncHandler(async(req,res)=>{
     const order = await Order.findById(req.params.id)
     const userId = order.user;
     const user = await User.findById(userId)
-    const userProfile = await Profile.findById(user.userProfile)
+    const userShipping = await Shipping.findById(user.shippingInfo)
 
     const deliveryPartners = await User.find({role:'employee'})
     const listOfAvailableDeliveryPartners = deliveryPartners.filter(async(dp)=>{
-        const dplocation = await Profile.findById(dp.userProfile)
-        return dplocation.city === userProfile.city
+        const dplocation = await Shipping.findById(dp.shippingInfo)
+        return dplocation.city === userShipping.city
     })
     
     return res
@@ -679,6 +679,9 @@ const assignOrder = asyncHandler(async(req,res)=>{
     await user.save();
 
     order.orderStatus = "Shipping";
+    const deliveryDate = new Date();
+    deliveryDate.setDate(deliveryDate.getDate() + 2);
+    order.deliveredAt = deliveryDate;
     order.deliveredBy = emp._id;
     await order.save();
 
