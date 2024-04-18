@@ -613,23 +613,23 @@ const viewUserGrevience = asyncHandler(async(req,res)=>{
 
 
 const responseForEmployement = asyncHandler(async(req,res)=>{
-    const grevience = await Greviences.findById(req.params.id).populate('user','userName role notifications');
+    const grevience = await Greviences.findById(req.params.id).populate('user','userName role');
     const { answer } = req.body;
+    let message;
+    console.log(grevience)
     if(answer === "Yes"){
         grevience.user.role = 'employee'
-        const notification = await Notification.create({
-            user:grevience.user._id,
-            message: "Congratulations You are Selected for Job"
-        })
-        grevience.user.notifications.push(notification.toObject())
+        message = "Congratulation you are slected for Job"
     }else{
-        const notification = await Notification.create({
-            user:grevience.user._id,
-            message: "Unfortunately Your Application was rejected , No job"
-        })
-        grevience.user.notifications.push(notification.toObject())
+        message = "Your Aplication was not afftedcted"
     }
-    await grevience.user.save();
+
+    await Notification.create({
+        user:grevience.user._id,
+        message: message
+    })
+
+    grevience.user.save()
 
     return res
     .status(200)
@@ -643,7 +643,7 @@ const getAllAvailableDeliveryPartners = asyncHandler(async(req,res)=>{
     const order = await Order.findById(req.params.id).populate('user','userName')
     const deliveryPartners = await User.find({role:'employee'}).populate('userProfile','city')
 
-    const listOfAvailableDeliveryPartners = deliveryPartners.filter(async(dp)=>{
+    const listOfAvailableDeliveryPartners = deliveryPartners.filter((dp)=>{
        return dp.userProfile.city === order.shippingInfo.city
     })
     
@@ -658,22 +658,21 @@ const getAllAvailableDeliveryPartners = asyncHandler(async(req,res)=>{
 const assignOrder = asyncHandler(async(req,res)=>{
     const orderId = req.params.orderId
     const empId = req.params.empId
-    const order = await Order.findById(orderId).populate('user','userName notifications')
+    const order = await Order.findById(orderId).populate('user','userName')
     const emp = await User.findById(empId)
     console.log(order)
 
-    emp.notifications.push({
+    await Notification.create({
         user:emp._id,
         message: "New Order Assigned"
     })
     emp.orders.push(order.toObject())
     await emp.save();
 
-    order.user.notifications.push({
+    await Notification.create({
         user:order.user._id,
         message: `Your Order has been shipped and will be delivered by ${emp.userName}`
     })
-    await order.user.save();
 
     order.orderStatus = "Shipping";
     const deliveryDate = new Date();
