@@ -745,7 +745,7 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
             throw new ApiError(401,"Product not found")
         }
         
-        const existingProductIndex = userHistory.productsPurchased.findIndex(p => p.product._id.toString() === productToBeOrdered._id.toString());
+        const existingProductIndex = userHistory.productsPurchased.findIndex(p => p._id.toString() === productToBeOrdered._id.toString());
 
         if (existingProductIndex !== -1) {
             userHistory.productsPurchased.splice(existingProductIndex, 1);
@@ -780,7 +780,7 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
         totalProductPrice:totalPrice,
         subtotalPrice:subtotalPrice,
         paymentMethod:paymentMethod,
-        shippingInfo:{shippingInfo},
+        shippingInfo:shippingInfo.toObject(),
     })
 
     if(!order){
