@@ -18,7 +18,11 @@ function getIPAddress() {
 const IP = getIPAddress();
 console.log("Dynamic IP address:", IP);
 
+const redirectURL = 'https://developers.google.com/oauthplayground';
+
+
 export {
     DB_NAME,
-    IP
+    IP,
+    redirectURL
 }

@@ -5,7 +5,7 @@ import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { start,end } from "../middlewares/session.middlewares.js"
 import { getOrder, getProductReviews, viewGalleryImage, viewGalleryImages } from "../controllers/admin.controllers.js"
 import { getRecommendedExercisesByExerciseUserGoals, getRecommendedProductsByAgeHeightWeight, getRecommendedProductsByCityCountry, getRecommendedProductsByFrequentlyBuying, getRecommendedProductsByGoalGender, getRecommendedProductsByProductUserGoals, getRecommendedProductsByRecentlyPurchasedProducts, getRecommendedProductsByRecentlySearchedProducts, getRecommendedProductsByRecentlyViewedProducts, getRecommendedProductsByTimeLine, getRecommendedProductsByTop5PurchasedProducts } from "../recommendations/recommendation.controllers.js"
-import { requestAdminForEmployement } from "../controllers/employee.controllers.js"
+import { otpVerification, requestAdminForEmployement, sendOtpToUser } from "../controllers/employee.controllers.js"
 
 const userRouter = Router()
 
@@ -131,5 +131,9 @@ userRouter.route("/view/products/recommendation/getByTime").get(verifyJWT,getRec
 
 // employee
 userRouter.route("/greviences/send").post(verifyJWT,requestAdminForEmployement)
+
+userRouter.route("/view/orders/:id/sendOTP").post(verifyJWT,sendOtpToUser)
+
+userRouter.route("/view/orders/:id/verifyOTP").put(verifyJWT,otpVerification)
 
 export default userRouter
