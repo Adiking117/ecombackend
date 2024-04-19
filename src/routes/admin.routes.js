@@ -136,6 +136,6 @@ adminRouter.route("/view/greviences/:id/response").put(verifyJWT,authorizeRoles(
 
 adminRouter.route("/view/orders/:id/getDelBoys").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getAllAvailableDeliveryPartners)
 
-adminRouter.route("/view/orders/:orderId/assign/:empId").get(verifyJWT,authorizeRoles(["admin","superadmin"]),assignOrder)
+adminRouter.route("/view/orders/:orderId/assign/:empId").put(verifyJWT,authorizeRoles(["admin","superadmin"]),assignOrder)
 
 export default adminRouter
