@@ -132,9 +132,9 @@ userRouter.route("/view/products/recommendation/getByTime").get(verifyJWT,getRec
 // employee
 userRouter.route("/greviences/send").post(verifyJWT,requestAdminForEmployement)
 
-userRouter.route("/view/orders").get(verifyJWT,authorizeRoles(["employee"]),getAssignedOrders)
+userRouter.route("/view/employee/orders").get(verifyJWT,authorizeRoles(["employee"]),getAssignedOrders)
 
-userRouter.route("/view/orders/history").get(verifyJWT,authorizeRoles(["employee"]),getDeliveredOrdersHistory)
+userRouter.route("/view/employee/orders/history").get(verifyJWT,authorizeRoles(["employee"]),getDeliveredOrdersHistory)
 
 userRouter.route("/view/orders/:id/sendOTP").post(verifyJWT,authorizeRoles(["employee"]),sendOtpToUser)
 
