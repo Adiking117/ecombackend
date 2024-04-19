@@ -23,15 +23,6 @@ data1[['age_scaled', 'height_scaled', 'weight_scaled']] = scaler1.fit_transform(
 kmeans1 = KMeans(n_clusters=3, init='random', n_init=10)
 data1['kmclus1'] = kmeans1.fit_predict(data1[['age_scaled', 'height_scaled', 'weight_scaled']])
 
-# # Function to recommend products based on age, height, and weight
-# def recommend_products(age, height, weight):
-#     scaled_data1 = scaler1.transform(np.array([[age, height, weight]]))
-#     predicted_cluster1 = kmeans1.predict(scaled_data1)[0]
-#     cluster_products1 = data1.groupby('kmclus1')['Product'].value_counts().reset_index(name='count')
-#     most_frequent_products1 = cluster_products1.groupby('kmclus1').first()
-#     recommended_product1 = most_frequent_products1.loc[predicted_cluster1]['Product']
-#     return recommended_product1
-
 def recommend_products(age, height, weight):
     scaled_data1 = scaler1.transform(np.array([[age, height, weight]]))
     predicted_cluster1 = kmeans1.predict(scaled_data1)[0]

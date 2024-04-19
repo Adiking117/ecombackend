@@ -62,6 +62,8 @@ const getAssignedOrders = asyncHandler(async(req,res)=>{
 
 const getDeliveredOrdersHistory = asyncHandler(async(req,res)=>{
     const orders = req.user.orderHistory
+    console.log(orders)
+    return res
     .status(200)
     .json(
         new ApiResponse(200,orders,"Orders fetched Successfully")
