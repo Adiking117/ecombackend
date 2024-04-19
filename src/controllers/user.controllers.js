@@ -796,7 +796,11 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
     })
     user.notifications.push(notification1);
 
-    order.paymentStatus = 'Done'
+    if(paymentMethod === 'CashOnDelivery'){
+        order.paymentStatus = 'Pending'
+    }else{
+        order.paymentStatus = 'Done'
+    }
     await order.save();
 
     const notification2 = await Notification.create({
@@ -818,8 +822,7 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
 
 
 const getMyOrders = asyncHandler(async(req,res)=>{
-    const user = req.user;
-    const orders = user.orders;
+    const orders = await Order.find({ user: req.user._id, orderStatus: { $ne: "Delivered" } });
     return res
     .status(200)
     .json(
@@ -829,8 +832,7 @@ const getMyOrders = asyncHandler(async(req,res)=>{
 
 
 const getOrderHistory = asyncHandler(async(req,res)=>{
-    const user = req.user;
-    const orders = user.orderHistory;
+    const orders = await Order.find({ user: req.user._id, orderStatus: "Delivered" });
     return res
     .status(200)
     .json(
@@ -947,4 +949,6 @@ export {
     buyAgainOrders,
     getAllNotications,
     getNotificationById,
+    deleteAllNotifications,
+    deleteNotificationById
 }

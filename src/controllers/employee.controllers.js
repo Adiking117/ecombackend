@@ -50,6 +50,25 @@ const requestAdminForEmployement = asyncHandler(async(req,res)=>{
 })
 
 
+const getAssignedOrders = asyncHandler(async(req,res)=>{
+    const orders = req.user.orders
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,orders,"Orders fetched Successfully")
+    )
+})
+
+
+const getDeliveredOrdersHistory = asyncHandler(async(req,res)=>{
+    const orders = req.user.orderHistory
+    .status(200)
+    .json(
+        new ApiResponse(200,orders,"Orders fetched Successfully")
+    )
+})
+
+
 const sendOtpToUser = asyncHandler(async(req,res)=>{
     const emp = req.user;
     const order = await Order.findById(req.params.id).populate('user','email')
@@ -108,6 +127,10 @@ const otpVerification = asyncHandler(async(req,res)=>{
     order.orderStatus = 'Approved';
     await order.save();
 
+    if(order.paymentMethod === 'CashOnDelivery'){
+        order.paymentStatus = 'Done'
+    }
+
     const emp = req.user;
     const orderIndex = emp.orders.findIndex((o)=>{
         return o._id === order._id
@@ -126,6 +149,8 @@ const otpVerification = asyncHandler(async(req,res)=>{
 
 export{
     requestAdminForEmployement,
+    getAssignedOrders,
+    getDeliveredOrdersHistory,
     sendOtpToUser,
     otpVerification
 }

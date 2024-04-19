@@ -447,6 +447,26 @@ const getPlacedOrders = asyncHandler(async(req,res)=>{
 })
 
 
+const getShippingOrders = asyncHandler(async(req,res)=>{
+    const shippingOrders = await Order.find( {orderStatus : "Shipping"} ).populate('user', 'firstName lastName');
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,shippingOrders,"Shipping Orders fetched successfully")
+    )
+})
+
+
+const getApprovedOrders = asyncHandler(async(req,res)=>{
+    const approvedOrders = await Order.find( {orderStatus : "Approved"} ).populate('user', 'firstName lastName');
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,approvedOrders,"Approved Orders fetched successfully")
+    )
+})
+
+
 const getDeliveredOrders = asyncHandler(async(req,res)=>{
     const deliveredOrders = await Order.find( {orderStatus : "Delivered"} ).populate('user', 'firstName lastName');
     return res
@@ -641,7 +661,9 @@ const responseForEmployement = asyncHandler(async(req,res)=>{
 
 const getAllAvailableDeliveryPartners = asyncHandler(async(req,res)=>{
     const order = await Order.findById(req.params.id).populate('user','userName')
-    const deliveryPartners = await User.find({role:'employee'}).populate('userProfile','city')
+    const deliveryPartners = await User.find({ role: 'employee' }).populate('userProfile', 'city').populate('orders');    
+
+    deliveryPartners.sort((a, b) => a.orders.length - b.orders.length);
 
     const listOfAvailableDeliveryPartners = deliveryPartners.filter((dp)=>{
        return dp.userProfile.city === order.shippingInfo.city
@@ -713,6 +735,8 @@ export{
     getAllOrders,
     getOrder,
     getPlacedOrders,
+    getShippingOrders,
+    getApprovedOrders,
     getDeliveredOrders,
     completeOrder,
     viewGreviences,

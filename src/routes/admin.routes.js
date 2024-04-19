@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { upload } from "../middlewares/multer.middlewares.js"
-import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, completeOrder, getPlacedOrders, getDeliveredOrders, addExercises, veiwAllExercises, viewExercise, deleteExercise, viewGreviences, viewUserGrevience, responseForEmployement, getAllAvailableDeliveryPartners, assignOrder } from "../controllers/admin.controllers.js";
+import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, completeOrder, getPlacedOrders, getDeliveredOrders, addExercises, veiwAllExercises, viewExercise, deleteExercise, viewGreviences, viewUserGrevience, responseForEmployement, getAllAvailableDeliveryPartners, assignOrder, getShippingOrders, getApprovedOrders } from "../controllers/admin.controllers.js";
 
 const adminRouter = Router();
 
@@ -119,6 +119,10 @@ adminRouter.route("/view/products/:id/reviews").get(verifyJWT,authorizeRoles(["a
 adminRouter.route("/view/orders").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getAllOrders)
 
 adminRouter.route("/view/orders/placed").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getPlacedOrders)
+
+adminRouter.route("/view/orders/shipping").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getShippingOrders)
+
+adminRouter.route("/view/orders/approved").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getApprovedOrders)
 
 adminRouter.route("/view/orders/delivered").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getDeliveredOrders)
 
