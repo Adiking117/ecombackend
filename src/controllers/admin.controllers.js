@@ -680,7 +680,7 @@ const getAllAvailableDeliveryPartners = asyncHandler(async(req,res)=>{
 const assignOrder = asyncHandler(async(req,res)=>{
     const orderId = req.params.orderId
     const empId = req.params.empId
-    const order = await Order.findById(orderId).populate('user','userName')
+    const order = await Order.findById(orderId).populate('user','userName firstName lastName')
     const emp = await User.findById(empId)
 
     await Notification.create({
