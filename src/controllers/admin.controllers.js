@@ -682,6 +682,7 @@ const assignOrder = asyncHandler(async(req,res)=>{
     const empId = req.params.empId
     const order = await Order.findById(orderId).populate('user','userName firstName lastName')
     const emp = await User.findById(empId)
+    order.orderStatus = "Shipping";
 
     await Notification.create({
         user:emp._id,
@@ -690,7 +691,6 @@ const assignOrder = asyncHandler(async(req,res)=>{
     emp.orders.push(order.toObject())
     await emp.save();
 
-    order.orderStatus = "Shipping";
     const deliveryDate = new Date();
     deliveryDate.setDate(deliveryDate.getDate() + 2);
     order.deliveredAt = deliveryDate;
