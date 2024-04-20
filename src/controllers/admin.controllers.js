@@ -12,10 +12,11 @@ import { UserDetails } from "../models/userDetails.models.js"
 import excel from 'exceljs';
 import { Notification } from "../models/notifications.models.js"
 import * as fs from 'fs';
-import { fileLocation } from "../filelocation.js"
+import { fileLocation,recommendations } from "../filelocation.js"
 import { Exercise } from "../models/exercise.models.js"
 import { Greviences } from "../models/greviences.models.js"
 import { Review } from "../models/review.models.js"
+import { spawn } from 'child_process';
 
 
 
@@ -713,22 +714,29 @@ const assignOrder = asyncHandler(async(req,res)=>{
 
 
 const getReviewSentiment = asyncHandler(async(req, res) => {
-    const reviews = await Review.find()
-
+    const reviews = await Review.find().populate('user','userName firstName lastName').populate('product','name')
     const workbook = new excel.Workbook();
     const worksheet = workbook.addWorksheet('Reviews');
 
     worksheet.columns = [
         { header: 'UserId', key: 'userId', width: 20 },
+        { header: 'UserName', key: 'userName', width: 20 },
+        { header: 'FirstName', key: 'firstName', width: 20 },
+        { header: 'LastName', key: 'lastName', width: 20 },
         { header: 'ProductId', key: 'productId', width: 20 },
+        { header: 'Product', key: 'product', width: 20 },
         { header: 'Rating', key: 'rating', width: 10 },
         { header: 'Comment', key: 'comment', width: 50 }
     ];
 
     reviews.forEach(review => {
         worksheet.addRow({
-            userId: review.user, 
-            productId: review.product, 
+            userId: review.user._id.toString(),
+            userName: review.user.userName,
+            firstName: review.user.firstName,
+            lastName: review.user.lastName,
+            productId: review.product._id.toString(), 
+            product : review.product.name,
             rating: review.rating,
             comment: review.comment
         });
@@ -738,11 +746,33 @@ const getReviewSentiment = asyncHandler(async(req, res) => {
 
     await workbook.xlsx.writeFile(fileLocation+fileName,{ overwrite: true });
 
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200,{},"")
-    )
+    const pythonProcess = spawn('python', [recommendations+'/Sentiment.py']);
+
+    let usersAsPerSentiment = {}
+    pythonProcess.stdout.on('data', (data) => {
+        const sentiment_users = JSON.parse(data.toString());
+        usersAsPerSentiment = sentiment_users
+
+    });
+    
+    pythonProcess.stderr.on('data', (data) => {
+        console.error(`Error: ${data}`);
+    });
+    
+    pythonProcess.on('close', (code) => {
+        if (code === 0) {
+            try {
+                res.status(200).json(
+                    new ApiResponse(200,usersAsPerSentiment,"Users Fetched Successfully")
+                )
+            } catch (error) {
+                console.error('Error:', error);
+                res.status(500).json({ error: 'An error occurred while processing the data' });
+            }
+        } else {
+            res.status(500).json({ error: 'An error occurred while running the Python script' });
+        }
+    });
 });
 
 
