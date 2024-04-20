@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { upload } from "../middlewares/multer.middlewares.js"
-import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, completeOrder, getPlacedOrders, getDeliveredOrders, addExercises, veiwAllExercises, viewExercise, deleteExercise, viewGreviences, viewUserGrevience, responseForEmployement, getAllAvailableDeliveryPartners, assignOrder, getShippingOrders, getApprovedOrders } from "../controllers/admin.controllers.js";
+import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, completeOrder, getPlacedOrders, getDeliveredOrders, addExercises, veiwAllExercises, viewExercise, deleteExercise, viewGreviences, viewUserGrevience, responseForEmployement, getAllAvailableDeliveryPartners, assignOrder, getShippingOrders, getApprovedOrders, getReviewSentiment } from "../controllers/admin.controllers.js";
 
 const adminRouter = Router();
 
@@ -141,5 +141,9 @@ adminRouter.route("/view/greviences/:id/response").put(verifyJWT,authorizeRoles(
 adminRouter.route("/view/orders/:id/getDelBoys").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getAllAvailableDeliveryPartners)
 
 adminRouter.route("/view/orders/:orderId/assign/:empId").put(verifyJWT,authorizeRoles(["admin","superadmin"]),assignOrder)
+
+
+// admin side anaylysus
+adminRouter.route("/view/feedbacks").get(verifyJWT,authorizeRoles(["admin","superadmin"]),getReviewSentiment)
 
 export default adminRouter

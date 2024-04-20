@@ -1,9 +1,10 @@
+import sys
 import pandas as pd
 from mlxtend.frequent_patterns import apriori
 from mlxtend.frequent_patterns import association_rules
 from constants import excelLocation
 
-def load_and_mine_data(csv_path, min_support_threshold=0.03, min_lift=3, min_confidence=0.3):
+def load_and_mine_data(csv_path, product_name, min_support_threshold=0.03, min_lift=3, min_confidence=0.3):
     # Load data
     myretaildata = pd.read_csv(csv_path)
 
@@ -40,15 +41,16 @@ def load_and_mine_data(csv_path, min_support_threshold=0.03, min_lift=3, min_con
         else:
             return None
 
-    return get_recommendations
+    return get_recommendations(product_name)
 
 # Define the path to your CSV file
-csv_path = excelLocation + "/ListOfProducts.csv"
+csv_path = excelLocation+"/ListOfProducts.csv"
+
+# Get the product name from command-line argument
+product_name = sys.argv[1]
+
+# product_name = 'Protein Water'
 
 # Call the load_and_mine_data function to get the get_recommendations function
-get_recommendations_function = load_and_mine_data(csv_path)
-
-# Example usage:
-antecedent = 'Protein Powder'
-recommendation = get_recommendations_function(antecedent)
-print(recommendation)
+recommendations = load_and_mine_data(csv_path, product_name)
+print(recommendations)

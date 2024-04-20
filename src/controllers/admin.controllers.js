@@ -15,6 +15,7 @@ import * as fs from 'fs';
 import { fileLocation } from "../filelocation.js"
 import { Exercise } from "../models/exercise.models.js"
 import { Greviences } from "../models/greviences.models.js"
+import { Review } from "../models/review.models.js"
 
 
 
@@ -711,6 +712,41 @@ const assignOrder = asyncHandler(async(req,res)=>{
 })
 
 
+const getReviewSentiment = asyncHandler(async(req, res) => {
+    const reviews = await Review.find()
+
+    const workbook = new excel.Workbook();
+    const worksheet = workbook.addWorksheet('Reviews');
+
+    worksheet.columns = [
+        { header: 'UserId', key: 'userId', width: 20 },
+        { header: 'ProductId', key: 'productId', width: 20 },
+        { header: 'Rating', key: 'rating', width: 10 },
+        { header: 'Comment', key: 'comment', width: 50 }
+    ];
+
+    reviews.forEach(review => {
+        worksheet.addRow({
+            userId: review.user, 
+            productId: review.product, 
+            rating: review.rating,
+            comment: review.comment
+        });
+    });
+
+    const fileName = `/sentiment.xlsx`;
+
+    await workbook.xlsx.writeFile(fileLocation+fileName,{ overwrite: true });
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,{},"")
+    )
+});
+
+
+
 export{
     getAllUser,
     getUser,
@@ -743,5 +779,6 @@ export{
     viewUserGrevience,
     responseForEmployement,
     getAllAvailableDeliveryPartners,
-    assignOrder
+    assignOrder,
+    getReviewSentiment
 }

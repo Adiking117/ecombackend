@@ -9,6 +9,7 @@ import { Order } from "../models/orders.models.js"
 import { Shipping } from "../models/shipping.models.js"
 import { Notification } from "../models/notifications.models.js"
 import { UserHistory } from "../models/userHistory.models.js"
+import { Review } from "../models/review.models.js"
 
 
 const generateUserAccessRefreshToken = async function(user_id){
@@ -455,6 +456,13 @@ const rateAndReviewProduct = asyncHandler(async (req, res) => {
     productToBeReviewed.avgRating = totalRatings !== 0 ? (totalRatingsSum / totalRatings).toFixed(2) : 0;
 
     await productToBeReviewed.save();
+
+    await Review.create({
+        user:user._id,
+        product:productToBeReviewed._id,
+        rating,
+        comment
+    })
 
     return res
     .status(200)
