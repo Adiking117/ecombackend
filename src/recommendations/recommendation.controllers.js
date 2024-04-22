@@ -21,7 +21,7 @@ const getRecommendedProductsByAgeHeightWeight = asyncHandler(async (req, res) =>
         const { age,height,weight } = userProfile
         let recommendedProducts = [];
 
-        const pythonProcess = spawn('python', [`${recommendations}/ageHeightWeight.py`, age, height, weight]);
+        const pythonProcess = spawn('python', [`${recommendations}/clustering/ageHeightWeight.py`, age, height, weight]);
         pythonProcess.stdout.on('data', (data) => {
             const productsArray = JSON.parse(data.toString().trim());
             recommendedProducts = productsArray;
@@ -56,7 +56,7 @@ const getRecommendedProductsByGoalGender = asyncHandler(async (req, res) => {
 
         let recommendedProducts = [];
 
-        const pythonProcess = spawn('python', [`${recommendations}/goalGender.py`, goal, gender]);
+        const pythonProcess = spawn('python', [`${recommendations}/clustering/goalGender.py`, goal, gender]);
 
         pythonProcess.stdout.on('data', (data) => {
             recommendedProducts = JSON.parse(data.toString().trim());
@@ -91,7 +91,7 @@ const getRecommendedProductsByCityCountry = asyncHandler(async (req, res) => {
 
         let recommendedProducts = [];
 
-        const pythonProcess = spawn('python', [`${recommendations}/cityCountry.py`, city, country]);
+        const pythonProcess = spawn('python', [`${recommendations}/clustering/cityCountry.py`, city, country]);
 
         pythonProcess.stdout.on('data', (data) => {
             recommendedProducts = JSON.parse(data.toString().trim());

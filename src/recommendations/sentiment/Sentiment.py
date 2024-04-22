@@ -56,7 +56,7 @@ def bulk_prediction(predictor, scaler, cv, data):
     X_prediction_scl = scaler.transform(X_prediction)
     y_predictions = predictor.predict_proba(X_prediction_scl)
     y_predictions = y_predictions.argmax(axis=1)
-    data['Sentiment'] = list(map(sentiment_mapping, y_predictions))  # Add Sentiment column to DataFrame
+    data['Sentiment'] = list(map(sentiment_mapping, y_predictions))
     return data
 
 def main():

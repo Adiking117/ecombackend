@@ -7,11 +7,11 @@ import warnings
 import json
 import pickle
 import sys
-
+from constants import excelLocation
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
 
 def load_data():
-    data = pd.read_excel("C:/Users/Aditya/Desktop/Ecomm CLG/backend/public/temp/user_details.xlsx")
+    data = pd.read_excel(excelLocation+"/user_details.xlsx")
     
     imputer = SimpleImputer(strategy='mean')
     data[['Age', 'Height', 'Weight']] = imputer.fit_transform(data[['Age', 'Height', 'Weight']])
@@ -32,7 +32,7 @@ def load_pickle():
 def recommend_products(age, height, weight, data, scaler):
     scaled_data = scaler.transform(np.array([[age, height, weight]]))
     
-    dbscan = DBSCAN(eps=0.3, min_samples=10)  # You can adjust epsilon and min_samples as needed
+    dbscan = DBSCAN(eps=0.3, min_samples=10)
     data['dbscan_cluster'] = dbscan.fit_predict(data[['age_scaled', 'height_scaled', 'weight_scaled']])
     
     input_cluster = dbscan.labels_[-1]  

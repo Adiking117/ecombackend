@@ -713,6 +713,7 @@ const assignOrder = asyncHandler(async(req,res)=>{
 })
 
 
+// Analysis
 const getReviewSentiment = asyncHandler(async(req, res) => {
     const reviews = await Review.find().populate('user','userName firstName lastName').populate('product','name')
     const workbook = new excel.Workbook();
@@ -746,7 +747,7 @@ const getReviewSentiment = asyncHandler(async(req, res) => {
 
     await workbook.xlsx.writeFile(fileLocation+fileName,{ overwrite: true });
 
-    const pythonProcess = spawn('python', [recommendations+'/Sentiment.py']);
+    const pythonProcess = spawn('python', [recommendations+'sentiment/Sentiment.py']);
 
     let usersAsPerSentiment = {}
     pythonProcess.stdout.on('data', (data) => {
@@ -775,6 +776,10 @@ const getReviewSentiment = asyncHandler(async(req, res) => {
     });
 });
 
+
+const findingSimilarUsers = asyncHandler(async(req,res)=>{
+    
+})
 
 
 export{
@@ -810,5 +815,6 @@ export{
     responseForEmployement,
     getAllAvailableDeliveryPartners,
     assignOrder,
-    getReviewSentiment
+    getReviewSentiment,
+    findingSimilarUsers
 }
