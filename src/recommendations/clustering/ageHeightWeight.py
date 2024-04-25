@@ -6,6 +6,7 @@ import numpy as np
 import warnings
 import json
 import pickle
+from sklearn.neighbors import NearestNeighbors
 import sys
 from constants import excelLocation
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
@@ -20,16 +21,31 @@ def load_data():
     
     return data, scaler
 
-def dump_pickle(data):
-    with open('user_data.pickle', 'wb') as handle:
-        pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+# def dump_pickle(data):
+#     with open('user_data.pickle', 'wb') as handle:
+#         pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-def load_pickle():
-    with open('user_data.pickle', 'rb') as handle:
-        data = pickle.load(handle)
-    return data
+# def load_pickle():
+#     with open('user_data.pickle', 'rb') as handle:
+#         data = pickle.load(handle)
+#     return data
 
-def recommend_products(age, height, weight, data, scaler):
+# def recommend_products(age, height, weight, data, scaler):
+#     scaled_data = scaler.transform(np.array([[age, height, weight]]))
+    
+#     dbscan = DBSCAN(eps=0.3, min_samples=10)
+#     data['dbscan_cluster'] = dbscan.fit_predict(data[['age_scaled', 'height_scaled', 'weight_scaled']])
+    
+#     input_cluster = dbscan.labels_[-1]  
+    
+#     cluster_products = data[data['dbscan_cluster'] == input_cluster]['Product']
+    
+#     top5_frequent_products = cluster_products.value_counts().head(5).index.tolist()
+    
+#     return top5_frequent_products
+
+
+def recommend_products(age, height, weight, data, scaler, k_neighbors=5):
     scaled_data = scaler.transform(np.array([[age, height, weight]]))
     
     dbscan = DBSCAN(eps=0.3, min_samples=10)
@@ -37,22 +53,33 @@ def recommend_products(age, height, weight, data, scaler):
     
     input_cluster = dbscan.labels_[-1]  
     
-    cluster_products = data[data['dbscan_cluster'] == input_cluster]['Product']
+    cluster_data = data[data['dbscan_cluster'] == input_cluster]
+    cluster_features = cluster_data[['age_scaled', 'height_scaled', 'weight_scaled']]
     
-    top5_frequent_products = cluster_products.value_counts().head(5).index.tolist()
+    knn = NearestNeighbors(n_neighbors=k_neighbors)
+    knn.fit(cluster_features)
+    distances, indices = knn.kneighbors(scaled_data)
     
-    return top5_frequent_products
+    neighbor_indices = indices[0][1:]
+    
+    neighbor_products = cluster_data.iloc[neighbor_indices]['Product'].tolist()
+    product_frequency = cluster_data['Product'].value_counts()
+    top_product = product_frequency.index[0] 
+    
+    return neighbor_products, top_product
 
 if __name__ == "__main__":
     data, scaler = load_data()
-    dump_pickle(data)
+    # dump_pickle(data)
 
     if len(sys.argv) == 4:
         age = float(sys.argv[1])
         height = float(sys.argv[2])
         weight = float(sys.argv[3])
-        top5_products = recommend_products(age, height, weight, data, scaler)
-        print(json.dumps(top5_products)) 
+        neighbor_products, top_product = recommend_products(age, height, weight, data, scaler, k_neighbors=5)
+        combined_products_set = set([top_product] + neighbor_products)
+        combined_products = list(combined_products_set)
+        print(json.dumps(combined_products))
 
 
 
