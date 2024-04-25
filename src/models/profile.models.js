@@ -32,7 +32,7 @@ const profileSchema = new mongoose.Schema({
     },
     state:{
         type:String,
-    }
+    },
     city:{
         type:String,
         required:true
