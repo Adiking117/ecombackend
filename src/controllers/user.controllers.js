@@ -49,7 +49,7 @@ const endSession = async function(userId) {
 
 const registerUser = asyncHandler(async(req,res)=>{
     const {userName , email , firstName , lastName , password } = req.body;
-    console.log("register triggered",req.body)
+    //console.log("register triggered",req.body)
 
     if (!userName || !email || !firstName || !lastName || !password) {
         throw new ApiError(401, "Fill all the details");
@@ -73,14 +73,15 @@ const registerUser = asyncHandler(async(req,res)=>{
         user.role = 'superadmin'
     }
 
-    await user.save();
-
     const userHistory = await UserHistory.create({
         user:user._id
     })
     await userHistory.save();
+    //console.log("user  ",user)
 
-    console.log("user  ",user)
+    user.userHistory = userHistory._id;
+
+    await user.save();
 
     const newuser = await User.findById(user._id).select("-password")
     // console.log(newuser)
@@ -138,7 +139,7 @@ const loginUser = asyncHandler(async(req,res)=>{
 
 
 const logoutUser = asyncHandler(async(req,res)=>{
-    console.log("logout controller", req.user)
+    //console.log("logout controller", req.user)
 
     await User.findByIdAndUpdate(
         req.user._id,
@@ -364,11 +365,11 @@ const getProduct = asyncHandler(async(req,res)=>{
         return p.product._id.toString() === product._id.toString()
     })
     if (existingIndex !== -1) {
-        userHistory.productsViewed[existingIndex].count += 0.5
+        userHistory.productsViewed[existingIndex].count += 1
     }else{
         userHistory.productsViewed.push({
             product:product,
-            count:0.5
+            count:1
         })
     }
     await userHistory.save();
@@ -457,12 +458,15 @@ const rateAndReviewProduct = asyncHandler(async (req, res) => {
 
     await productToBeReviewed.save();
 
-    await Review.create({
+    const review = await Review.create({
         user:user._id,
         product:productToBeReviewed._id,
         rating,
         comment
     })
+
+    user.userReview = review._id;
+    await user.save();
 
     return res
     .status(200)

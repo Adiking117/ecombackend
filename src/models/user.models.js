@@ -77,6 +77,14 @@ const userSchema = new mongoose.Schema({
     userProfile:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Profile"
+    },
+    userHistory:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"UserHistory"
+    },
+    userReview:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Review"
     }
 },{
     timestamps:true

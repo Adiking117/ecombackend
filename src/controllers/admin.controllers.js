@@ -17,6 +17,7 @@ import { Exercise } from "../models/exercise.models.js"
 import { Greviences } from "../models/greviences.models.js"
 import { Review } from "../models/review.models.js"
 import { spawn } from 'child_process';
+import { UserHistory } from "../models/userHistory.models.js"
 
 
 
@@ -37,7 +38,7 @@ const getAllUser = asyncHandler(async(req,res)=>{
 
 const getUser = asyncHandler(async(req,res)=>{
     const user = await User.findById( { _id:req.params.id } ).select("-password");
-    console.log("user found",user)
+    // console.log("user found",user)
     if(!user){
         throw new ApiError(404,"USer Not forund")
     }
@@ -516,6 +517,8 @@ const completeOrder = asyncHandler(async(req,res)=>{
         products.push(product.name)
     }
 
+    // console.log(products)
+
     const userDetails = new UserDetails({
         first_name: user.firstName,
         last_name: user.lastName,
@@ -777,6 +780,28 @@ const getReviewSentiment = asyncHandler(async(req, res) => {
 });
 
 
+const getChurnedUsers = asyncHandler(async(req,res)=>{
+    const user = await User.find({role:'user'}).populate('userProfile','age gender').populate('userHistory','productsViewed').populate('userReview','rating')
+    console.log(user)
+    // const orderHistory = user.orderHistory;
+    // let totalMoney = 0;
+    // orderHistory.map((val)=>{
+    //     totalMoney += val.totalProductPrice;
+    // })
+    // const avgOrder = totalMoney/(orderHistory.length)
+    // const productViewedHistory = await UserHistory.findOne({user:user._id})
+    // const productClick = productViewedHistory.productsViewed.length;
+    // const reviewsGivenByUser = await Review.find({user:user._id})
+    // console.log(reviewsGivenByUser)
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user,"")
+    )
+})
+
+
 const findingSimilarUsers = asyncHandler(async(req,res)=>{
     
 })
@@ -816,5 +841,6 @@ export{
     getAllAvailableDeliveryPartners,
     assignOrder,
     getReviewSentiment,
+    getChurnedUsers,
     findingSimilarUsers
 }
