@@ -4,7 +4,7 @@ import { registerUser,loginUser, updateUserProfile, logoutUser, getDetails, getA
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { start,end } from "../middlewares/session.middlewares.js"
 import { getOrder, getProductReviews, viewGalleryImage, viewGalleryImages } from "../controllers/admin.controllers.js"
-import { getRecommendedExercisesByExerciseUserGoals, getRecommendedProductsByAgeHeightWeight, getRecommendedProductsByCityCountry, getRecommendedProductsByFrequentlyBuying, getRecommendedProductsByFrequentlyBuyingStorePage, getRecommendedProductsByGoalGender, getRecommendedProductsByProductUserGoals, getRecommendedProductsByRecentlyPurchasedProducts, getRecommendedProductsByRecentlySearchedProducts, getRecommendedProductsByRecentlyViewedProducts, getRecommendedProductsByTimeLine, getRecommendedProductsByTop5PurchasedProducts } from "../recommendations/recommendation.controllers.js"
+import { getRecommendedExercisesByExerciseUserGoals, getRecommendedProductsByAgeHeightWeight, getRecommendedProductsByFrequentlyBuying, getRecommendedProductsByFrequentlyBuyingStorePage, getRecommendedProductsByGoalGender, getRecommendedProductsByProductUserGoals, getRecommendedProductsByRecentlyPurchasedProducts, getRecommendedProductsByRecentlySearchedProducts, getRecommendedProductsByRecentlyViewedProducts, getRecommendedProductsByTimeLine, getRecommendedProductsByTop5PurchasedProducts } from "../recommendations/recommendation.controllers.js"
 import { getAssignedOrders, getDeliveredOrdersHistory, otpVerification, requestAdminForEmployement, sendOtpToUser } from "../controllers/employee.controllers.js"
 
 const userRouter = Router()
@@ -109,8 +109,6 @@ userRouter.route("/view/notifications/:id").put(verifyJWT,getNotificationById)
 userRouter.route("/view/products/recommendation/ageHeightWeight").get(verifyJWT,getRecommendedProductsByAgeHeightWeight)
 
 userRouter.route("/view/products/recommendation/goalGender").get(verifyJWT,getRecommendedProductsByGoalGender)
-
-userRouter.route("/view/products/recommendation/cityCountry").get(verifyJWT,getRecommendedProductsByCityCountry)
 
 userRouter.route("/view/products/products/:id/recommendation/freqBuy").get(verifyJWT,getRecommendedProductsByFrequentlyBuying)
 

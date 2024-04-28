@@ -1,79 +1,83 @@
-import re
-import pandas as pd
 import pickle
+import re
+import nltk
+import pandas as pd
+from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
-from nltk.stem.porter import PorterStemmer
-import matplotlib.pyplot as plt
-import warnings
-import json
+from nltk.stem import PorterStemmer
+from sklearn.feature_extraction.text import CountVectorizer
+
 import os
-warnings.filterwarnings("ignore", category=UserWarning, module='sklearn')
-from constants import excelLocation , dirpath
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+from constants import dirpath,excelLocation
 
-STOPWORDS = set(stopwords.words("english"))
+# Load the voting classifier from the pickle file
+with open(dirpath+'/sentiment/sentiment_analysis_model.pkl', 'rb') as f:
+    loaded_model = pickle.load(f)
 
-def single_prediction(predictor, scaler, cv, text_input):
-    corpus = []
-    stemmer = PorterStemmer()
-    review = re.sub("[^a-zA-Z]", " ", text_input)
-    review = review.lower().split()
-    review = [stemmer.stem(word) for word in review if not word in STOPWORDS]
-    review = " ".join(review)
-    corpus.append(review)
-    X_prediction = cv.transform(corpus).toarray()
-    X_prediction_scl = scaler.transform(X_prediction)
-    y_predictions = predictor.predict_proba(X_prediction_scl)
-    y_predictions = y_predictions.argmax(axis=1)[0]
+# Define the functions for text preprocessing
+def convert_lower(text):
+    return text.lower()
 
-    if y_predictions == 1:
-        return "Positive"
-    elif y_predictions == 0:
-        return "Negative"
-    else:
-        return "Neutral"
+def clean_html(text):
+    clean = re.compile('<.*?>')
+    return re.sub(clean, '', text)
 
-def sentiment_mapping(x):
-    if x == 1:
-        return "Positive"
-    elif x == 2:
-        return "Neutral"
-    else:
-        return "Negative"
+def remove_special(text):
+    x = ''
+    for i in text:
+        if i.isalnum():
+            x = x + i
+        else:
+            x = x + ' '
+    return x
 
-def bulk_prediction(predictor, scaler, cv, data):
-    corpus = []
-    stemmer = PorterStemmer()
-    sentiments = []
+# Load NLTK resources
+nltk.download('punkt', quiet=True)
+nltk.download('stopwords', quiet=True)
 
-    for i in range(0, data.shape[0]):
-        review = re.sub("[^a-zA-Z]", " ", data.iloc[i]["Comment"])
-        review = review.lower().split()
-        review = [stemmer.stem(word) for word in review if not word in STOPWORDS]
-        review = " ".join(review)
-        corpus.append(review)
+# Initialize stopwords and stemmer
+stop_words = set(stopwords.words('english'))
+stemmer = PorterStemmer()
 
-    X_prediction = cv.transform(corpus).toarray()
-    X_prediction_scl = scaler.transform(X_prediction)
-    y_predictions = predictor.predict_proba(X_prediction_scl)
-    y_predictions = y_predictions.argmax(axis=1)
-    data['Sentiment'] = list(map(sentiment_mapping, y_predictions))
-    return data
+# Read data from the Excel file
+df = pd.read_excel(excelLocation+'/sentiments.xlsx')
 
-def main():
-    predictor = pickle.load(open(os.path.join(dirpath, "model_xgb.pkl"), "rb"))
-    scaler = pickle.load(open(os.path.join(dirpath, "scaler.pkl"), "rb"))
-    cv = pickle.load(open(os.path.join(dirpath, "countVectorizer.pkl"), "rb"))
+# Preprocess the reviews
+def preprocess_review(review):
+    review_lower = convert_lower(review)
+    review_clean = clean_html(review_lower)
+    review_special_removed = remove_special(review_clean)
+    review_tokenized = word_tokenize(review_special_removed.lower())
+    review_no_stopwords = [word for word in review_tokenized if word not in stop_words]
+    review_stemmed = [stemmer.stem(word) for word in review_no_stopwords]
+    review_processed = ' '.join(review_stemmed)
+    return review_processed
 
-    data = pd.read_excel(excelLocation + "/sentiment.xlsx")
+# Preprocess all reviews and make predictions
+negative_user_ids = []
+for _, row in df.iterrows():
+    review_processed = preprocess_review(row['Comment'])
+    # Load the vocabulary from the trained CountVectorizer
+    with open(dirpath+'/sentiment/count_vectorizer_vocab.pkl', 'rb') as f:
+        vocabulary = pickle.load(f)
     
-    data_with_sentiment = bulk_prediction(predictor, scaler, cv, data)
-    sentiment_users = {
-        "Positive": data_with_sentiment[data_with_sentiment['Sentiment'] == "Positive"].to_dict(orient='records'),
-        "Neutral": data_with_sentiment[data_with_sentiment['Sentiment'] == "Neutral"].to_dict(orient='records'),
-        "Negative": data_with_sentiment[data_with_sentiment['Sentiment'] == "Negative"].to_dict(orient='records')
-    }
-    print(json.dumps(sentiment_users))
+    # Vectorize the preprocessed review using the fitted vocabulary
+    vectorizer = CountVectorizer(vocabulary=vocabulary)
+    review_vectorized = vectorizer.transform([review_processed]).toarray() # type: ignore
+    
+    # Make sentiment prediction
+    sentiment_prediction = loaded_model.predict(review_vectorized)
+    
+    # Determine sentiment label
+    sentiment_label = "Positive" if sentiment_prediction == 1 else "Negative"
+    
+    # Print or store the sentiment prediction and user ID
+    if sentiment_label == "Negative":
+        negative_user_ids.append(row['User'])
 
-
-if __name__ == "__main__":
-    main()
+# Print user IDs with negative sentiments
+print(negative_user_ids)

@@ -18,9 +18,10 @@ import { Greviences } from "../models/greviences.models.js"
 import { Review } from "../models/review.models.js"
 import { spawn } from 'child_process';
 import { UserHistory } from "../models/userHistory.models.js"
-
-
-
+import cron from 'node-cron';
+import { WebsiteChurn } from "../models/websiteChurn.models.js"
+import { ReviewSentiment } from "../models/sentimentAnal.models.js"
+import mongoose from "mongoose"
 // get all users , get a user detail
 const getAllUser = asyncHandler(async(req,res)=>{
     const user = await User.find({role:{ $nin: ["superadmin"] }}).select("-password");
@@ -401,6 +402,8 @@ const deleteProduct = asyncHandler(async(req,res)=>{
 
 const getProductReviews = asyncHandler(async (req, res) => {
     const productId = req.params.id;
+    
+    console.log(productId)
     const product = await Product.findById(productId).populate('reviews.user', 'userName firstName lastName');
     if (!product) {
         throw new ApiError(404, "Product not found");
@@ -717,94 +720,291 @@ const assignOrder = asyncHandler(async(req,res)=>{
 
 
 // Analysis
-const getReviewSentiment = asyncHandler(async(req, res) => {
-    const reviews = await Review.find().populate('user','userName firstName lastName').populate('product','name')
+const getChurnedUsers = asyncHandler(async (req, res) => {
+    const users = await User.find({ role: 'user' })
+        .populate('userProfile', 'age gender')
+        .populate('userHistory', 'productsViewed')
+        .populate('userReview');
+
+    let userList = [];
+    for (const u of users) {
+        const userId = u._id;
+        let age = null;
+        let gender = null;
+        if (u.userProfile) {
+            age = u.userProfile.age;
+            gender = u.userProfile.gender;
+        }
+
+        let totalMoney = 0;
+        let productClicks = 0;
+        let totalRating = 0;
+
+        u.orderHistory.forEach((o) => {
+            totalMoney += o.totalProductPrice;
+        });
+        const avgOrder = totalMoney / (u.orderHistory.length || 1);
+
+        if (u.userHistory) {
+            u.userHistory.productsViewed.forEach((p) => {
+                productClicks += p.count;
+            });
+        }
+
+        const apiCalled = u.__v || 0;
+
+        u.userReview.forEach((r) => {
+            totalRating += r.rating;
+        });
+        const avgTotalRating = totalRating / (u.userReview.length || 1);
+
+        const userData = {
+            user: userId,
+            age,
+            gender,
+            avgOrder,
+            totalMoney,
+            productClicks,
+            apiCalled,
+            avgTotalRating
+        };
+        userList.push(userData);
+
+        await WebsiteChurn.findOneAndUpdate(
+            { user: userId },
+            userData,
+            { upsert: true, new: true }
+        );
+    }
+
+    const websiteChurnData = await WebsiteChurn.find({}).populate('user', 'userProfile');
+
+    const workbook = new excel.Workbook();
+    const worksheet = workbook.addWorksheet('User List');
+
+    worksheet.columns = [
+        { header: 'UserId', key: 'userId', width: 15 },
+        { header: 'Age', key: 'age', width: 10 },
+        { header: 'Gender', key: 'gender', width: 10 },
+        { header: 'AvgOrderValues', key: 'avgOrder', width: 15 },
+        { header: 'TotalMoneySpent', key: 'totalMoney', width: 15 },
+        { header: 'ProductClicks', key: 'productClicks', width: 15 },
+        { header: 'APIsCalled', key: 'apiCalled', width: 15 },
+        { header: 'AvgRatingOnAllProduct', key: 'avgTotalRating', width: 15 }
+    ];
+
+    const excelData = websiteChurnData.map(data => {
+        const userData = {
+            userId: data.user._id,
+            age: data.age,
+            gender: data.gender,
+            avgOrder: data.avgOrder,
+            totalMoney: data.totalMoney,
+            productClicks: data.productClicks,
+            apiCalled: data.apiCalled,
+            avgTotalRating: data.avgTotalRating
+        };
+        return userData;
+    });
+
+    worksheet.addRows(excelData);
+
+    const excelBuffer = await workbook.xlsx.writeBuffer();
+
+    const excelFileName = 'churn_list.xlsx';
+    const filePath = `${fileLocation}/${excelFileName}`;
+
+    fs.writeFileSync(filePath, excelBuffer);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, excelData, "UserList added to excel Successfully")
+        );
+});
+
+const deleteOldWebsiteChurnDocuments = async () => {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+    try {
+        await WebsiteChurn.deleteMany({ updatedAt: { $lt: oneMonthAgo } });
+        console.log('Deleted old WebsiteChurn documents');
+    } catch (error) {
+        console.error('Error deleting old WebsiteChurn documents:', error);
+    }
+};
+
+cron.schedule('0 0 1 * *', deleteOldWebsiteChurnDocuments);
+
+const userLikelyToBeChurned = asyncHandler(async(req, res) => {
+    const pythonScriptPath = recommendations + "/churning/websiteChurn.py";
+    let usersToBeChurned = [];
+
+    const pythonProcess = spawn('python', [pythonScriptPath]);
+
+    pythonProcess.stdout.on('data', async (data) => {
+        try {
+            const cleanedData = data.toString().trim();
+            const trimmedData = cleanedData.slice(1, -1);
+            const churnedUserIds = trimmedData.split(',').map(id => id.trim().replace(/'/g, ''));
+
+            await Promise.all(churnedUserIds.map(async id => {
+                const userId = id.replace(/"/g, '');
+                const user = await User.findById(userId);
+                if (user) {
+                    usersToBeChurned.push(user.toObject());
+                } else {
+                    console.log(`User with ID ${userId} not found`);
+                }
+            }));
+
+            // Send response once all users are fetched
+            return res.status(200).json(new ApiResponse(200, usersToBeChurned, "User Churned List fetched Successfully"));
+        } catch (error) {
+            console.error("Error processing churned users:", error);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+        console.error(`Error from Python script: ${data}`);
+        return res.status(500).json({ message: 'Internal server error' });
+    });
+    
+    pythonProcess.on('close', (code) => {
+        if (code !== 0) {
+            console.error(`Python script exited with code ${code}`);
+            return res.status(500).json({ message: 'Internal server error' });
+        } else {
+            console.log('Python script exited normally');
+        }
+    });
+
+    // Handle Python process error event
+    pythonProcess.on('error', (error) => {
+        console.error('Python process error:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    });
+});
+
+
+
+const getNeggaUsers = asyncHandler(async (req, res) => {
+    const users = await User.find({ role: 'user' }).populate('userReview');
+    const currentDate = new Date();
+    const oneMonthAgo = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate());
+
+    let newReviews = [];
+    for (const u of users) {
+        for (const c of u.userReview) {
+            const existingReview = await ReviewSentiment.findOne({
+                user: c.user.toString()
+            });
+
+            if (!existingReview) {
+                newReviews.push({
+                    user: c.user,
+                    product: c.product,
+                    rating: c.rating,
+                    comment: c.comment
+                });
+            }
+        }
+    }
+
+    try {
+        if (newReviews.length > 0) {
+            await ReviewSentiment.insertMany(newReviews);
+        }
+    } catch (error) {
+        console.error('Error storing new reviews:', error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    try {
+        await ReviewSentiment.deleteMany({ createdAt: { $lt: oneMonthAgo } });
+    } catch (error) {
+        console.error('Error deleting old reviews:', error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    let reviews;
+    try {
+        reviews = await ReviewSentiment.find({});
+    } catch (error) {
+        console.error('Error fetching reviews:', error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
     const workbook = new excel.Workbook();
     const worksheet = workbook.addWorksheet('Reviews');
 
     worksheet.columns = [
-        { header: 'UserId', key: 'userId', width: 20 },
-        { header: 'UserName', key: 'userName', width: 20 },
-        { header: 'FirstName', key: 'firstName', width: 20 },
-        { header: 'LastName', key: 'lastName', width: 20 },
-        { header: 'ProductId', key: 'productId', width: 20 },
+        { header: 'User', key: 'user', width: 20 },
         { header: 'Product', key: 'product', width: 20 },
         { header: 'Rating', key: 'rating', width: 10 },
-        { header: 'Comment', key: 'comment', width: 50 }
+        { header: 'Comment', key: 'comment', width: 40 }
     ];
 
-    reviews.forEach(review => {
+    reviews.forEach((review) => {
         worksheet.addRow({
-            userId: review.user._id.toString(),
-            userName: review.user.userName,
-            firstName: review.user.firstName,
-            lastName: review.user.lastName,
-            productId: review.product._id.toString(), 
-            product : review.product.name,
+            user: review.user.toString(),
+            product: review.product.toString(),
             rating: review.rating,
             comment: review.comment
         });
     });
 
-    const fileName = `/sentiment.xlsx`;
+    const filePath = fileLocation + '/sentiments.xlsx';
+    try {
+        await workbook.xlsx.writeFile(filePath);
+    } catch (error) {
+        console.error('Error writing Excel file:', error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
 
-    await workbook.xlsx.writeFile(fileLocation+fileName,{ overwrite: true });
+    return res.status(200).json(new ApiResponse(200,reviews,"Reviews stored successfully"));
+});
 
-    const pythonProcess = spawn('python', [recommendations+'sentiment/Sentiment.py']);
+const userNegativeReviews = asyncHandler(async(req, res) => {
+    const pythonScript = spawn('python', [`${recommendations}/sentiment/sentiment.py`]);
+    let usersToBeNegative = [];
 
-    let usersAsPerSentiment = {}
-    pythonProcess.stdout.on('data', (data) => {
-        const sentiment_users = JSON.parse(data.toString());
-        usersAsPerSentiment = sentiment_users
-
-    });
-    
-    pythonProcess.stderr.on('data', (data) => {
-        console.error(`Error: ${data}`);
-    });
-    
-    pythonProcess.on('close', (code) => {
-        if (code === 0) {
-            try {
-                res.status(200).json(
-                    new ApiResponse(200,usersAsPerSentiment,"Users Fetched Successfully")
-                )
-            } catch (error) {
-                console.error('Error:', error);
-                res.status(500).json({ error: 'An error occurred while processing the data' });
+    pythonScript.stdout.on('data', async (data) => {
+        const cleanedData = data.toString().trim();
+        const trimmedData = cleanedData.slice(1, -1);
+        const negativeUserIds = trimmedData.split(',').map(id => id.trim().replace(/'/g, ''));
+        try {
+            for (const id of negativeUserIds) {
+                if (id) {
+                    const user = await User.findById(id);
+                    if (user) {
+                        usersToBeNegative.push({
+                            id: user._id,
+                            user : user.userName
+                        });
+                    }
+                }
             }
-        } else {
-            res.status(500).json({ error: 'An error occurred while running the Python script' });
+            return res.status(200).json(new ApiResponse(200, usersToBeNegative, "User Sentiment List fetched Successfully"));
+        } catch (error) {
+            console.error('Error retrieving user reviews:', error);
+            return res.status(500).json({ error: 'Internal Server Error' });
         }
+    });
+
+    pythonScript.stderr.on('data', (data) => {
+        console.error(`Error from Python script: ${data}`);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    });
+
+    pythonScript.on('close', (code) => {
+        console.log(`Python script exited with code ${code}`);
     });
 });
 
 
-const getChurnedUsers = asyncHandler(async(req,res)=>{
-    const user = await User.find({role:'user'}).populate('userProfile','age gender').populate('userHistory','productsViewed').populate('userReview','rating')
-    console.log(user)
-    // const orderHistory = user.orderHistory;
-    // let totalMoney = 0;
-    // orderHistory.map((val)=>{
-    //     totalMoney += val.totalProductPrice;
-    // })
-    // const avgOrder = totalMoney/(orderHistory.length)
-    // const productViewedHistory = await UserHistory.findOne({user:user._id})
-    // const productClick = productViewedHistory.productsViewed.length;
-    // const reviewsGivenByUser = await Review.find({user:user._id})
-    // console.log(reviewsGivenByUser)
-
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200,user,"")
-    )
-})
-
-
-const findingSimilarUsers = asyncHandler(async(req,res)=>{
-    
-})
 
 
 export{
@@ -840,7 +1040,8 @@ export{
     responseForEmployement,
     getAllAvailableDeliveryPartners,
     assignOrder,
-    getReviewSentiment,
     getChurnedUsers,
-    findingSimilarUsers
+    userLikelyToBeChurned,
+    getNeggaUsers,
+    userNegativeReviews
 }

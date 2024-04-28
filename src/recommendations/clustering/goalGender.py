@@ -12,7 +12,13 @@ from sklearn.neighbors import NearestNeighbors
 # Ignore the warning
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
 
-from constants import excelLocation
+
+import os
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+from constants import dirpath,excelLocation
 
 # Load the data
 data2 = pd.read_excel(excelLocation + "/user_details.xlsx")
@@ -69,4 +75,4 @@ if len(sys.argv) == 3:
 
     combined_products = list(combined_products_set)
 
-    print(json.dumps({"combined_products": combined_products}))
+    print(json.dumps(combined_products))

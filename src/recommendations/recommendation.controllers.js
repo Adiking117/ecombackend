@@ -60,6 +60,7 @@ const getRecommendedProductsByGoalGender = asyncHandler(async (req, res) => {
 
         pythonProcess.stdout.on('data', (data) => {
             recommendedProducts = JSON.parse(data.toString().trim());
+            console.log(recommendedProducts)
         });
 
         pythonProcess.stderr.on('data', (data) => {
@@ -84,17 +85,41 @@ const getRecommendedProductsByGoalGender = asyncHandler(async (req, res) => {
 });
 
 
-const getRecommendedProductsByCityCountry = asyncHandler(async (req, res) => {
+
+const getRecommendedProductsByFrequentlyBuying = asyncHandler(async(req, res) => {
     try {
-        const userProfile = await Profile.findOne({ user: req.user._id });
-        const { city, country } = userProfile;
+        const orders = await Order.find();
+        let transactions = [];
 
-        let recommendedProducts = [];
+        for (const o of orders) {
+            let t = new Set();
+            o.orderItems.forEach((item) => {
+                t.add(item.name);
+            });
+            transactions.push(Array.from(t)); 
+        }
+        //console.log(JSON.stringify(transactions))
+        const productId = req.params.id;
 
-        const pythonProcess = spawn('python', [`${recommendations}/clustering/cityCountry.py`, city, country]);
+        const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(400).json({ error: 'Product not found' });
+        }
+
+        const pythonProcess = spawn('python', [
+            recommendations+'/apriori.py', 
+            product.name, 
+            JSON.stringify(transactions)
+            //transactions
+        ]);
+
+        let productsArray = [];
 
         pythonProcess.stdout.on('data', (data) => {
-            recommendedProducts = JSON.parse(data.toString().trim());
+            const productsString = data.toString().trim();
+            const receivedProducts = JSON.parse(productsString);
+            productsArray.push(...receivedProducts);
+            //console.log(productsArray)
         });
 
         pythonProcess.stderr.on('data', (data) => {
@@ -103,55 +128,16 @@ const getRecommendedProductsByCityCountry = asyncHandler(async (req, res) => {
         });
 
         pythonProcess.on('close', async (code) => {
-            let productsToBeRecommended = [];
-            for (const pname of recommendedProducts) {
-                const product = await Product.findOne({ name: pname })
-                productsToBeRecommended.push(product)
-            }
-            res.status(200).json(
-                new ApiResponse(200, productsToBeRecommended, "Product recommended successfully")
-            );
-        });
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: 'An error occurred' });
-    }
-});
-
-
-
-const getRecommendedProductsByFrequentlyBuying = asyncHandler(async(req, res) => {
-    try {
-        const product = await Product.findById(req.params.id);
-        if (!product) {
-            throw new ApiError(400, "Product not found");
-        }
-
-        const pythonProcess = spawn('python', [`${recommendations}/apriori.py`, product.name]);
-
-        let recommendedProducts = [];
-
-        pythonProcess.stdout.on('data', (data) => {
-            const productsString = data.toString().trim();
-            const productsArray = productsString.split("', '").map(product => product.replace(/'|\[|\]/g, ''));
-            recommendedProducts = productsArray;
-        });
-
-        pythonProcess.stderr.on('data', (data) => {
-            console.error(`Python stderr: ${data}`);
-            res.status(500).json({ error: 'An error occurred while running the Python script' });
-        });
-
-        pythonProcess.on('close', async(code) => {
             if (code === 0) {
-                try {
-                    const productsToBeRecommended = await Product.find({ name: { $in: recommendedProducts } });
-                    res.status(200).json(
-                        new ApiResponse(200,productsToBeRecommended,"Products Frequently Buyed together")
-                    )
-                } catch (error) {
-                    console.error('Error:', error);
-                    res.status(500).json({ error: 'An error occurred while processing the data' });
+                if (productsArray.length > 0) {
+                    let prodDetails = [];
+                    for (const p of productsArray) {
+                        const product = await Product.findOne({ name: p });
+                        prodDetails.push(product.toObject());
+                    }
+                    res.status(200).json(new ApiResponse(200, prodDetails, "Frequently bought Products fetched"));
+                } else {
+                    res.status(200).json(new ApiResponse(200, [], "No frequently bought Products found"));
                 }
             } else {
                 res.status(500).json({ error: 'An error occurred while running the Python script' });
@@ -171,13 +157,14 @@ const getRecommendedProductsByFrequentlyBuyingStorePage = asyncHandler(async(req
 
     const pythonProcess = spawn('python', [`${recommendations}/apriori.py`, lastOrderItem?.name]);
 
-    let recommendedProducts = [];
+    let productsArray = [];
 
-    pythonProcess.stdout.on('data', (data) => {
-        const productsString = data.toString().trim();
-        const productsArray = productsString.split("', '").map(product => product.replace(/'|\[|\]/g, ''));
-        recommendedProducts = productsArray;
-    });
+        pythonProcess.stdout.on('data', (data) => {
+            const productsString = data.toString().trim();
+            const receivedProducts = JSON.parse(productsString);
+            productsArray.push(...receivedProducts);
+            //console.log(productsArray)
+        });
 
     pythonProcess.stderr.on('data', (data) => {
         console.error(`Python stderr: ${data}`);
@@ -187,10 +174,12 @@ const getRecommendedProductsByFrequentlyBuyingStorePage = asyncHandler(async(req
     pythonProcess.on('close', async(code) => {
         if (code === 0) {
             try {
-                const productsToBeRecommended = await Product.find({ name: { $in: recommendedProducts } });
-                res.status(200).json(
-                    new ApiResponse(200,productsToBeRecommended,"Products Frequently Buyed together")
-                )
+                let prodDetails = []
+                for(const p of productsArray){
+                    const product = await Product.findOne({name:p})
+                    prodDetails.push(product.toObject())
+                }
+                res.status(200).json(new ApiResponse(200,prodDetails,"Frequently buyed Products fetched"));
             } catch (error) {
                 console.error('Error:', error);
                 res.status(500).json({ error: 'An error occurred while processing the data' });
@@ -354,7 +343,6 @@ const getRecommendedProductsByTimeLine = asyncHandler(async (req, res) => {
 export {
     getRecommendedProductsByAgeHeightWeight,
     getRecommendedProductsByGoalGender,
-    getRecommendedProductsByCityCountry,
     getRecommendedProductsByFrequentlyBuying,
     getRecommendedProductsByFrequentlyBuyingStorePage,
     getRecommendedExercisesByExerciseUserGoals,

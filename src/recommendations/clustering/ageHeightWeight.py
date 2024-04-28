@@ -8,7 +8,14 @@ import json
 import pickle
 from sklearn.neighbors import NearestNeighbors
 import sys
-from constants import excelLocation
+
+import os
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+from constants import dirpath,excelLocation
+
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
 
 def load_data():

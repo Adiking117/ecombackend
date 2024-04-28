@@ -82,10 +82,12 @@ const userSchema = new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"UserHistory"
     },
-    userReview:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:"Review"
-    }
+    userReview:[
+        {
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"Review"
+        }
+    ]
 },{
     timestamps:true
 })

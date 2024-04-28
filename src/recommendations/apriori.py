@@ -1,56 +1,121 @@
 import sys
-import pandas as pd
-from mlxtend.frequent_patterns import apriori
-from mlxtend.frequent_patterns import association_rules
-from constants import excelLocation
+import json
+class Node:
+    def __init__(self, item, frequency, parent):
+        self.item = item
+        self.frequency = frequency
+        self.parent = parent
+        self.children = {}
 
-def load_and_mine_data(csv_path, product_name, min_support_threshold=0.03, min_lift=3, min_confidence=0.3):
-    # Load data
-    myretaildata = pd.read_csv(csv_path)
 
-    # Preprocess data
-    myretaildata['Products'] = myretaildata['Products'].str.strip()
-    myretaildata.dropna(axis=0, subset=['Invoice No'], inplace=True)
-    myretaildata['Invoice No'] = myretaildata['Invoice No'].astype('str')
+def build_tree(transactions, min_support):
+    header_table = {}
+    for transaction in transactions:
+        for item in transaction:
+            header_table[item] = header_table.get(item, 0) + 1
 
-    # Create basket sets
-    mybasket = (myretaildata.groupby(['Invoice No','Products'])['Quantity']
-        .sum().unstack().reset_index().fillna(0)
-        .set_index('Invoice No'))
-    
-    # Convert to boolean type
-    my_basket_sets = mybasket.map(lambda x: True if x >= 1 else False)
+    header_table = {k: v for k, v in header_table.items() if v >= min_support}
 
-    # Generate frequent itemsets
-    my_frequent_itemsets = apriori(my_basket_sets, min_support=min_support_threshold, use_colnames=True)
+    frequent_items = set(header_table.keys())
 
-    # Generate association rules
-    my_rules = association_rules(my_frequent_itemsets, metric="lift", min_threshold=min_lift)
+    if len(frequent_items) == 0:
+        return None, None
 
-    def get_recommendations(antecedents):
-        # Filter rules based on the antecedents
-        filtered_rules = my_rules[my_rules['antecedents'] == frozenset({antecedents})]
+    for k in header_table:
+        header_table[k] = [header_table[k], None]
 
-        # Sort rules based on the number of consequents in descending order
-        sorted_rules = filtered_rules.sort_values(by=['consequents'], key=lambda x: x.str.len(), ascending=False)
+    root = Node("Null", 1, None)
 
-        # Return the first row with the most consequents as a list
-        if not sorted_rules.empty:
-            consequents_list = list(sorted_rules.iloc[0]['consequents'])
-            return consequents_list
+    for transaction in transactions:
+        frequent_transaction = {}
+        for item in transaction:
+            if item in frequent_items:
+                frequent_transaction[item] = header_table[item][0]
+
+        if len(frequent_transaction) > 0:
+            ordered_items = [item[0] for item in sorted(frequent_transaction.items(),
+                                                         key=lambda x: x[1], reverse=True)]
+            update_tree(ordered_items, root, header_table, 1)
+
+    return root, header_table
+
+
+def update_tree(items, node, header_table, frequency):
+    if items[0] in node.children:
+        node.children[items[0]].frequency += frequency
+    else:
+        node.children[items[0]] = Node(items[0], frequency, node)
+
+        if header_table[items[0]][1] is None:
+            header_table[items[0]][1] = node.children[items[0]]
         else:
-            return None
+            current = header_table[items[0]][1]
+            while current.parent:
+                current = current.parent
+            current.next = node.children[items[0]]
 
-    return get_recommendations(product_name)
+    if len(items) > 1:
+        update_tree(items[1:], node.children[items[0]], header_table, frequency)
 
-# Define the path to your CSV file
-csv_path = excelLocation+"/ListOfProducts.csv"
 
-# Get the product name from command-line argument
-product_name = sys.argv[1]
+def find_prefix_path(base_path, node):
+    conditional_patterns = {}
+    for child in node.children.values():
+        prefix_path = []
+        current = child
+        while current.parent:
+            prefix_path.append(current.item)
+            current = current.parent
+        if len(prefix_path) > 1:
+            conditional_patterns[frozenset(prefix_path[1:])] = child.frequency
 
-# product_name = 'Protein Water'
+    return conditional_patterns
 
-# Call the load_and_mine_data function to get the get_recommendations function
-recommendations = load_and_mine_data(csv_path, product_name)
-print(recommendations)
+
+def mine_tree(header_table, min_support, prefix, frequent_item_sets):
+    sorted_items = [item[0] for item in sorted(header_table.items(), key=lambda x: x[1][0])]
+
+    for item in sorted_items:
+        new_frequent_set = prefix.copy()
+        new_frequent_set.add(item)
+        frequent_item_sets.append(new_frequent_set)
+
+        conditional_pattern_bases = find_prefix_path(item, header_table[item][1])
+        conditional_tree, conditional_header = build_tree(conditional_pattern_bases.keys(), min_support)
+
+        if conditional_header is not None:
+            mine_tree(conditional_header, min_support, new_frequent_set, frequent_item_sets)
+
+
+def fp_growth(transactions, min_support):
+    root, header_table = build_tree(transactions, min_support)
+    frequent_item_sets = []
+    mine_tree(header_table, min_support, set(), frequent_item_sets)
+    return frequent_item_sets
+
+
+def find_frequent_item_sets_for_product(transactions, product_name, min_support):
+    product_transactions = [transaction for transaction in transactions if product_name in transaction]
+    frequent_item_sets = fp_growth(product_transactions, min_support)
+    return frequent_item_sets
+
+
+
+
+input_product = sys.argv[1]
+transactions = transactions = [
+['Peanut Butter Protein Powder', 'Protein Shake Ready-to-Drink (RTD)', 'Pre-Workout Supplement'],
+['Creatine Monohydrate', 'Mass Gainer Supplement', 'Whey Protein Powder', 'Peanut Butter Protein Powder'],
+['Creatine Monohydrate', 'Mass Gainer Supplement', 'Whey Protein Powder', 'Protein Shake Ready-to-Drink (RTD)'],
+['Creatine Monohydrate', 'Mass Gainer Supplement', 'Whey Protein Powder', 'Pre-Workout Supplement'],
+['Creatine Monohydrate', 'Mass Gainer Supplement', 'Peanut Butter Protein Powder', 'Protein Shake Ready-to-Drink (RTD)'],
+['Creatine Monohydrate', 'Mass Gainer Supplement', 'Peanut Butter Protein Powder', 'Pre-Workout Supplement'],
+['Creatine Monohydrate', 'Mass Gainer Supplement', 'Protein Shake Ready-to-Drink (RTD)', 'Pre-Workout Supplement'],
+['Creatine Monohydrate', 'Whey Protein Powder', 'Peanut Butter Protein Powder', 'Protein Shake Ready-to-Drink (RTD)'],
+['Creatine Monohydrate', 'Whey Protein Powder', 'Peanut Butter Protein Powder', 'Pre-Workout Supplement'],
+['Creatine Monohydrate', 'Whey Protein Powder', 'Protein Shake Ready-to-Drink (RTD)', 'Pre-Workout Supplement']
+]
+min_support = 3  
+frequent_item_sets = find_frequent_item_sets_for_product(transactions, input_product, min_support)
+all_frequent_products = [product for item_set in frequent_item_sets for product in item_set]
+print(json.dumps(all_frequent_products))

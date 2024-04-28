@@ -465,7 +465,7 @@ const rateAndReviewProduct = asyncHandler(async (req, res) => {
         comment
     })
 
-    user.userReview = review._id;
+    user.userReview.push(review._id)
     await user.save();
 
     return res
