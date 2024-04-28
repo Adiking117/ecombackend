@@ -60,7 +60,6 @@ const getRecommendedProductsByGoalGender = asyncHandler(async (req, res) => {
 
         pythonProcess.stdout.on('data', (data) => {
             recommendedProducts = JSON.parse(data.toString().trim());
-            console.log(recommendedProducts)
         });
 
         pythonProcess.stderr.on('data', (data) => {
@@ -98,7 +97,7 @@ const getRecommendedProductsByFrequentlyBuying = asyncHandler(async(req, res) =>
             });
             transactions.push(Array.from(t)); 
         }
-        //console.log(JSON.stringify(transactions))
+
         const productId = req.params.id;
 
         const product = await Product.findById(productId);
@@ -110,7 +109,6 @@ const getRecommendedProductsByFrequentlyBuying = asyncHandler(async(req, res) =>
             recommendations+'/apriori.py', 
             product.name, 
             JSON.stringify(transactions)
-            //transactions
         ]);
 
         let productsArray = [];
@@ -119,12 +117,11 @@ const getRecommendedProductsByFrequentlyBuying = asyncHandler(async(req, res) =>
             const productsString = data.toString().trim();
             const receivedProducts = JSON.parse(productsString);
             productsArray.push(...receivedProducts);
-            //console.log(productsArray)
         });
 
         pythonProcess.stderr.on('data', (data) => {
             console.error(`Python stderr: ${data}`);
-            res.status(500).json({ error: 'An error occurred while running the Python script' });
+            // Don't immediately send response, just log the error
         });
 
         pythonProcess.on('close', async (code) => {
@@ -140,6 +137,61 @@ const getRecommendedProductsByFrequentlyBuying = asyncHandler(async(req, res) =>
                     res.status(200).json(new ApiResponse(200, [], "No frequently bought Products found"));
                 }
             } else {
+                console.error(`Python process exited with code ${code}`);
+                res.status(500).json({ error: 'An error occurred while running the Python script' });
+            }
+        });
+
+        // Add an error event handler for the Python process
+        pythonProcess.on('error', (err) => {
+            console.error('Python process error:', err);
+            res.status(500).json({ error: 'An error occurred while running the Python script' });
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'An error occurred' });
+    }
+});
+
+
+const getRecommendedProductsByFrequentlyBuyingStorePage = asyncHandler(async(req, res) => {
+    try {
+        const orderHistory = req.user.orderHistory;
+        const lastOrder = orderHistory[orderHistory.length - 1];
+        const lastOrderItem = lastOrder?.orderItems[lastOrder.orderItems.length - 1];
+
+        const pythonProcess = spawn('python', [`${recommendations}/apriori.py`, lastOrderItem?.name]);
+
+        let productsArray = [];
+
+        pythonProcess.stdout.on('data', (data) => {
+            const productsString = data.toString().trim();
+            const receivedProducts = JSON.parse(productsString);
+            productsArray.push(...receivedProducts);
+            //console.log(productsArray)
+        });
+
+        pythonProcess.stderr.on('data', (data) => {
+            console.error(`Python stderr: ${data}`);
+            // Respond to the client with an error message
+            res.status(500).json({ error: 'An error occurred while running the Python script' });
+        });
+
+        pythonProcess.on('close', async(code) => {
+            if (code === 0) {
+                try {
+                    let prodDetails = []
+                    for(const p of productsArray){
+                        const product = await Product.findOne({name:p})
+                        prodDetails.push(product.toObject())
+                    }
+                    res.status(200).json(new ApiResponse(200,prodDetails,"Frequently bought Products fetched"));
+                } catch (error) {
+                    console.error('Error:', error);
+                    res.status(500).json({ error: 'An error occurred while processing the data' });
+                }
+            } else {
+                console.error(`Python process exited with code ${code}`);
                 res.status(500).json({ error: 'An error occurred while running the Python script' });
             }
         });
@@ -149,46 +201,6 @@ const getRecommendedProductsByFrequentlyBuying = asyncHandler(async(req, res) =>
     }
 });
 
-
-const getRecommendedProductsByFrequentlyBuyingStorePage = asyncHandler(async(req,res)=>{
-    const orderHistory = req.user.orderHistory;
-    const lastOrder = orderHistory[orderHistory.length - 1];
-    const lastOrderItem = lastOrder?.orderItems[lastOrder.orderItems.length - 1];
-
-    const pythonProcess = spawn('python', [`${recommendations}/apriori.py`, lastOrderItem?.name]);
-
-    let productsArray = [];
-
-        pythonProcess.stdout.on('data', (data) => {
-            const productsString = data.toString().trim();
-            const receivedProducts = JSON.parse(productsString);
-            productsArray.push(...receivedProducts);
-            //console.log(productsArray)
-        });
-
-    pythonProcess.stderr.on('data', (data) => {
-        console.error(`Python stderr: ${data}`);
-        res.status(500).json({ error: 'An error occurred while running the Python script' });
-    });
-
-    pythonProcess.on('close', async(code) => {
-        if (code === 0) {
-            try {
-                let prodDetails = []
-                for(const p of productsArray){
-                    const product = await Product.findOne({name:p})
-                    prodDetails.push(product.toObject())
-                }
-                res.status(200).json(new ApiResponse(200,prodDetails,"Frequently buyed Products fetched"));
-            } catch (error) {
-                console.error('Error:', error);
-                res.status(500).json({ error: 'An error occurred while processing the data' });
-            }
-        } else {
-            res.status(500).json({ error: 'An error occurred while running the Python script' });
-        }
-    });
-})
 
 
 const getRecommendedExercisesByExerciseUserGoals = asyncHandler(async(req,res)=>{
