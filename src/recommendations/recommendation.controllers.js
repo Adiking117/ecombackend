@@ -173,27 +173,31 @@ const getRecommendedProductsByFrequentlyBuyingStorePage = asyncHandler(async(req
 
         pythonProcess.stderr.on('data', (data) => {
             console.error(`Python stderr: ${data}`);
-            // Respond to the client with an error message
-            res.status(500).json({ error: 'An error occurred while running the Python script' });
+            // Don't immediately send response, just log the error
         });
 
-        pythonProcess.on('close', async(code) => {
+        pythonProcess.on('close', async (code) => {
             if (code === 0) {
-                try {
-                    let prodDetails = []
-                    for(const p of productsArray){
-                        const product = await Product.findOne({name:p})
-                        prodDetails.push(product.toObject())
+                if (productsArray.length > 0) {
+                    let prodDetails = [];
+                    for (const p of productsArray) {
+                        const product = await Product.findOne({ name: p });
+                        prodDetails.push(product.toObject());
                     }
-                    res.status(200).json(new ApiResponse(200,prodDetails,"Frequently bought Products fetched"));
-                } catch (error) {
-                    console.error('Error:', error);
-                    res.status(500).json({ error: 'An error occurred while processing the data' });
+                    res.status(200).json(new ApiResponse(200, prodDetails, "Frequently bought Products fetched"));
+                } else {
+                    res.status(200).json(new ApiResponse(200, [], "No frequently bought Products found"));
                 }
             } else {
                 console.error(`Python process exited with code ${code}`);
                 res.status(500).json({ error: 'An error occurred while running the Python script' });
             }
+        });
+
+        // Add an error event handler for the Python process
+        pythonProcess.on('error', (err) => {
+            console.error('Python process error:', err);
+            res.status(500).json({ error: 'An error occurred while running the Python script' });
         });
     } catch (error) {
         console.error('Error:', error);
