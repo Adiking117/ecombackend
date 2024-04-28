@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import MinMaxScaler
 import pickle
 import warnings
@@ -18,9 +19,9 @@ warnings.filterwarnings("ignore", message="X has feature names, but SVC was fitt
 user_details_df = pd.read_excel(excelLocation+"/churn_list.xlsx")
 
 # Preprocess user details
-user_details_df['Gender'] = user_details_df['Gender'].map({'Male': 0, 'Female': 1})
-user_details_df['Gender'].fillna(user_details_df['Gender'].mode()[0], inplace=True)
+user_details_df['Gender'] = user_details_df['Gender'].map({'male': 0, 'female': 1})
 
+# Drop 'UserId' column
 user_details_df_user_id_drop = user_details_df.drop(['UserId'], axis=1)
 
 # Load the scaler
@@ -29,6 +30,22 @@ scaler = MinMaxScaler()
 # Scale the user details
 user_details_scaled = user_details_df_user_id_drop.copy()
 user_details_scaled[['Age', 'ProductClicks', 'APIsCalled', 'AvgRatingOnAllProduct', 'AvgOrderValues', 'TotalMoneySpent']] = scaler.fit_transform(user_details_scaled[['Age', 'ProductClicks', 'APIsCalled', 'AvgRatingOnAllProduct', 'AvgOrderValues', 'TotalMoneySpent']])
+
+# Separate 'Gender' column
+gender_column = user_details_scaled[['Gender']]
+numerical_data = user_details_scaled.drop('Gender', axis=1)
+
+# Impute numerical columns
+imputer = SimpleImputer(strategy='mean')
+numerical_data_imputed = imputer.fit_transform(numerical_data)
+user_details_imputed = pd.DataFrame(numerical_data_imputed, columns=numerical_data.columns)
+
+# Concatenate 'Gender' column back
+user_details_imputed = pd.concat([user_details_imputed, gender_column], axis=1)
+
+# Fill missing values in all columns (including 'Gender') with mean of respective columns
+user_details_imputed.fillna(user_details_imputed.mean(), inplace=True)
+
 
 with open(dirpath+'/churning/logistic_regression_model.pkl', 'rb') as f:
     logistic_coefficients = pickle.load(f)
@@ -64,9 +81,9 @@ def svm_predict(X, clf):
     return clf.predict(X)
 
 # Make predictions
-logistic_prediction = logistic_regression_predict(user_details_scaled, logistic_coefficients)
-random_forest_prediction = random_forest_predict(user_details_scaled, classifiers)
-svm_prediction = svm_predict(user_details_scaled, svm_classifier)
+logistic_prediction = logistic_regression_predict(user_details_imputed, logistic_coefficients)
+random_forest_prediction = random_forest_predict(user_details_imputed, classifiers)
+svm_prediction = svm_predict(user_details_imputed, svm_classifier)
 
 # Combine predictions using voting ensemble
 final_prediction = np.round((logistic_prediction + random_forest_prediction + svm_prediction) / 3)
@@ -75,6 +92,9 @@ churned_user_ids = []
 
 for i, prediction in enumerate(final_prediction):
     if prediction == 1:
-        churned_user_ids.append(user_details_df.iloc[i]['UserId'])
+        user_id = user_details_df.iloc[i]['UserId']
+        user_id = user_id.strip('"') 
+        churned_user_ids.append(user_id)
 
-print(churned_user_ids)
+churned_user_ids_array = np.array(churned_user_ids)
+print(churned_user_ids_array)

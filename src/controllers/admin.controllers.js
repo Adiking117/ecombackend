@@ -837,55 +837,57 @@ const deleteOldWebsiteChurnDocuments = async () => {
 
 cron.schedule('0 0 1 * *', deleteOldWebsiteChurnDocuments);
 
-const userLikelyToBeChurned = asyncHandler(async(req, res) => {
-    const pythonScriptPath = recommendations + "/churning/websiteChurn.py";
-    let usersToBeChurned = [];
+const userLikelyToBeChurned = asyncHandler(async (req, res) => {
+    try {
+        const pythonScriptPath = recommendations + "/churning/websiteChurn.py";
 
-    const pythonProcess = spawn('python', [pythonScriptPath]);
+        const pythonProcess = spawn('python', [pythonScriptPath]);
+        let usersToBeChurned = [];
 
-    pythonProcess.stdout.on('data', async (data) => {
-        try {
-            const cleanedData = data.toString().trim();
-            const trimmedData = cleanedData.slice(1, -1);
-            const churnedUserIds = trimmedData.split(',').map(id => id.trim().replace(/'/g, ''));
-
-            await Promise.all(churnedUserIds.map(async id => {
-                const userId = id.replace(/"/g, '');
-                const user = await User.findById(userId);
-                if (user) {
-                    usersToBeChurned.push(user.toObject());
-                } else {
-                    console.log(`User with ID ${userId} not found`);
+        pythonProcess.stdout.on('data', async (data) => {
+            try {
+                const cleanedData = data.toString().trim();
+                const arrayOfStrings = cleanedData.slice(1, -1).split(" ").map(str => str.replace(/'/g, '').trim());
+                for(const u of arrayOfStrings){
+                    const user = await User.findById(u)
+                    usersToBeChurned.push(user.toObject())
                 }
-            }));
+                return res.status(200).json(new ApiResponse(200, usersToBeChurned, "User Churned List fetched Successfully"));
+            } catch (error) {
+                console.error("Error processing churned users:", error);
+                // Handle error processing data without crashing Node.js server
+                return res.status(500).json({ message: 'Error processing churned users' });
+            }
+        });
+        
 
-            // Send response once all users are fetched
-            return res.status(200).json(new ApiResponse(200, usersToBeChurned, "User Churned List fetched Successfully"));
-        } catch (error) {
-            console.error("Error processing churned users:", error);
-            return res.status(500).json({ message: 'Internal server error' });
-        }
-    });
+        pythonProcess.stderr.on('data', (data) => {
+            console.error(`Error from Python script: ${data}`);
+            // Handle error from Python script without crashing Node.js server
+            return res.status(500).json({ message: 'Error from Python script' });
+        });
 
-    pythonProcess.stderr.on('data', (data) => {
-        console.error(`Error from Python script: ${data}`);
+        pythonProcess.on('close', (code) => {
+            if (code !== 0) {
+                console.error(`Python script exited with code ${code}`);
+                // Handle non-zero exit code without crashing Node.js server
+                return res.status(500).json({ message: 'Python script exited with non-zero code' });
+            } else {
+                console.log('Python script exited normally');
+            }
+        });
+
+        // Handle Python process error event
+        pythonProcess.on('error', (error) => {
+            console.error('Python process error:', error);
+            // Handle Python process error without crashing Node.js server
+            return res.status(500).json({ message: 'Python process error' });
+        });
+    } catch (error) {
+        console.error('Error in userLikelyToBeChurned function:', error);
+        // Handle unexpected errors without crashing Node.js server
         return res.status(500).json({ message: 'Internal server error' });
-    });
-    
-    pythonProcess.on('close', (code) => {
-        if (code !== 0) {
-            console.error(`Python script exited with code ${code}`);
-            return res.status(500).json({ message: 'Internal server error' });
-        } else {
-            console.log('Python script exited normally');
-        }
-    });
-
-    // Handle Python process error event
-    pythonProcess.on('error', (error) => {
-        console.error('Python process error:', error);
-        return res.status(500).json({ message: 'Internal server error' });
-    });
+    }
 });
 
 
@@ -968,40 +970,57 @@ const getNeggaUsers = asyncHandler(async (req, res) => {
 });
 
 const userNegativeReviews = asyncHandler(async(req, res) => {
-    const pythonScript = spawn('python', [`${recommendations}/sentiment/sentiment.py`]);
-    let usersToBeNegative = [];
+    try {
+        const pythonScript = spawn('python', [`${recommendations}/sentiment/sentiment.py`]);
+        let usersToBeNegative = [];
 
-    pythonScript.stdout.on('data', async (data) => {
-        const cleanedData = data.toString().trim();
-        const trimmedData = cleanedData.slice(1, -1);
-        const negativeUserIds = trimmedData.split(',').map(id => id.trim().replace(/'/g, ''));
-        try {
-            for (const id of negativeUserIds) {
-                if (id) {
-                    const user = await User.findById(id);
-                    if (user) {
-                        usersToBeNegative.push({
-                            id: user._id,
-                            user : user.userName
-                        });
+        pythonScript.stdout.on('data', async (data) => {
+            try {
+                const cleanedData = data.toString().trim();
+                const trimmedData = cleanedData.slice(1, -1);
+                const negativeUserIds = trimmedData.split(',').map(id => id.trim().replace(/'/g, ''));
+                
+                for (const id of negativeUserIds) {
+                    if (id) {
+                        const user = await User.findById(id);
+                        if (user) {
+                            usersToBeNegative.push({
+                                id: user._id,
+                                user : user.userName
+                            });
+                        }
                     }
                 }
+                return res.status(200).json(new ApiResponse(200, usersToBeNegative, "User Sentiment List fetched Successfully"));
+            } catch (error) {
+                console.error('Error retrieving user reviews:', error);
+                return res.status(500).json({ error: 'Internal Server Error' });
             }
-            return res.status(200).json(new ApiResponse(200, usersToBeNegative, "User Sentiment List fetched Successfully"));
-        } catch (error) {
-            console.error('Error retrieving user reviews:', error);
+        });
+
+        pythonScript.stderr.on('data', (data) => {
+            console.error(`Error from Python script: ${data}`);
             return res.status(500).json({ error: 'Internal Server Error' });
-        }
-    });
+        });
 
-    pythonScript.stderr.on('data', (data) => {
-        console.error(`Error from Python script: ${data}`);
+        pythonScript.on('close', (code) => {
+            if (code !== 0) {
+                console.error(`Python script exited with code ${code}`);
+                return res.status(500).json({ error: 'Python script exited with non-zero code' });
+            } else {
+                console.log('Python script exited normally');
+            }
+        });
+
+        // Handle Python process error event
+        pythonScript.on('error', (error) => {
+            console.error('Python process error:', error);
+            return res.status(500).json({ error: 'Python process error' });
+        });
+    } catch (error) {
+        console.error('Error in userNegativeReviews function:', error);
         return res.status(500).json({ error: 'Internal Server Error' });
-    });
-
-    pythonScript.on('close', (code) => {
-        console.log(`Python script exited with code ${code}`);
-    });
+    }
 });
 
 
