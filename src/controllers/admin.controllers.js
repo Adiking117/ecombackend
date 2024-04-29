@@ -986,7 +986,9 @@ const userNegativeReviews = asyncHandler(async(req, res) => {
                         if (user) {
                             usersToBeNegative.push({
                                 id: user._id,
-                                user : user.userName
+                                user : user.userName,
+                                firstName: user.firstName,
+                                lastName: user.lastName,
                             });
                         }
                     }
