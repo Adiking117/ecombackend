@@ -305,6 +305,117 @@ const getDetails = asyncHandler(async(req,res)=>{
 })
 
 
+const getCityCountryProfileList = asyncHandler(async(req,res)=>{
+    const citylist = {
+        "0": {
+          "city": "Mumbai",
+          "state": "Maharashtra",
+          "country": "India"
+        },
+        "1": {
+          "city": "Delhi",
+          "state": "Delhi",
+          "country": "India"
+        },
+        "2": {
+          "city": "Bangalore",
+          "state": "Karnataka",
+          "country": "India"
+        },
+        "3": {
+          "city": "Kolkata",
+          "state": "West Bengal",
+          "country": "India"
+        },
+        "4": {
+          "city": "Chennai",
+          "state": "Tamil Nadu",
+          "country": "India"
+        },
+        "5": {
+          "city": "Hyderabad",
+          "state": "Telangana",
+          "country": "India"
+        },
+        "6": {
+          "city": "Pune",
+          "state": "Maharashtra",
+          "country": "India"
+        },
+        "7": {
+          "city": "Ahmedabad",
+          "state": "Gujarat",
+          "country": "India"
+        },
+        "8": {
+          "city": "Surat",
+          "state": "Gujarat",
+          "country": "India"
+        },
+        "9": {
+          "city": "Jaipur",
+          "state": "Rajasthan",
+          "country": "India"
+        },
+        "10": {
+          "city": "Lucknow",
+          "state": "Uttar Pradesh",
+          "country": "India"
+        },
+        "11": {
+          "city": "Kanpur",
+          "state": "Uttar Pradesh",
+          "country": "India"
+        },
+        "12": {
+          "city": "Nagpur",
+          "state": "Maharashtra",
+          "country": "India"
+        },
+        "13": {
+          "city": "Patna",
+          "state": "Bihar",
+          "country": "India"
+        },
+        "14": {
+          "city": "Indore",
+          "state": "Madhya Pradesh",
+          "country": "India"
+        },
+        "15": {
+          "city": "Thane",
+          "state": "Maharashtra",
+          "country": "India"
+        },
+        "16": {
+          "city": "Bhopal",
+          "state": "Madhya Pradesh",
+          "country": "India"
+        },
+        "17": {
+          "city": "Visakhapatnam",
+          "state": "Andhra Pradesh",
+          "country": "India"
+        },
+        "18": {
+          "city": "Vadodara",
+          "state": "Gujarat",
+          "country": "India"
+        },
+        "19": {
+          "city": "Firozabad",
+          "state": "Uttar Pradesh",
+          "country": "India"
+        }
+      }
+      
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,citylist,"City list")
+    )
+})
+
 
 // Products
 const getAllProducts = asyncHandler(async(req, res) => {
@@ -937,6 +1048,7 @@ export {
     getShippingDetails,
     getProfile,
     getDetails,
+    getCityCountryProfileList,
     logoutUser,
     getAllProducts,
     getProduct,
