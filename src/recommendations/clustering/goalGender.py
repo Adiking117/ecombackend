@@ -33,17 +33,6 @@ data2_scaled = scaler2.fit_transform(data2[['Goal', 'Gender']])
 kmeans2 = KMeans(n_clusters=3, init='random', n_init=10)
 data2['kmclus2'] = kmeans2.fit_predict(data2_scaled)
 
-# Function to recommend products based on goal and gender
-# def recommend_products_by_goal_gender(goal, gender):
-#     encoded_data2 = {}
-#     for column in ['Goal', 'Gender']:
-#         le = label_encoders2[column]
-#         encoded_data2[column] = le.transform([goal, gender])[0] if goal in le.classes_ and gender in le.classes_ else -1
-#     scaled_data2 = scaler2.transform(np.array([[encoded_data2['Goal'], encoded_data2['Gender']]]))
-#     predicted_cluster2 = kmeans2.predict(scaled_data2)[0]
-#     cluster_products2 = data2[data2['kmclus2'] == predicted_cluster2]['Product']
-#     top5_frequent_products = cluster_products2.value_counts().head(5).index.tolist()
-#     return top5_frequent_products
 
 def recommend_products_by_goal_gender(goal, gender):
     encoded_data2 = {}

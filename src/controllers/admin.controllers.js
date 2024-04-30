@@ -1026,6 +1026,11 @@ const userNegativeReviews = asyncHandler(async(req, res) => {
 });
 
 
+const findSimilarUsers = asyncHandler(async(req,res)=>{
+    
+})
+
+
 
 
 export{

@@ -8,18 +8,18 @@ import json
 import pickle
 from sklearn.neighbors import NearestNeighbors
 import sys
-import os
 
-# Importing constants from the parent directory
+import os
+import sys
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
-from constants import dirpath, excelLocation
+from constants import dirpath,excelLocation
 
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
 
-def load_data():
-    try:
+try:
+    def load_data():
         data = pd.read_excel(excelLocation+"/user_details.xlsx")
         
         imputer = SimpleImputer(strategy='mean')
@@ -28,13 +28,9 @@ def load_data():
         data[['age_scaled', 'height_scaled', 'weight_scaled']] = scaler.fit_transform(data[['Age', 'Height', 'Weight']])
         
         return data, scaler
-    except Exception as e:
-        print(f"Error occurred while loading data: {str(e)}", file=sys.stderr)
-        return None, None
 
 
-def recommend_products(age, height, weight, data, scaler, k_neighbors=5):
-    try:
+    def recommend_products(age, height, weight, data, scaler, k_neighbors=5):
         scaled_data = scaler.transform(np.array([[age, height, weight]]))
         
         dbscan = DBSCAN(eps=0.3, min_samples=10)
@@ -56,23 +52,20 @@ def recommend_products(age, height, weight, data, scaler, k_neighbors=5):
         top_product = product_frequency.index[0] 
         
         return neighbor_products, top_product
-    except Exception as e:
-        print(f"Error occurred while recommending products: {str(e)}", file=sys.stderr)
-        return None, None
 
-if __name__ == "__main__":
-    data, scaler = load_data()
+    if __name__ == "__main__":
+        data, scaler = load_data()
+        # dump_pickle(data)
 
-    if data is not None and scaler is not None:
         if len(sys.argv) == 4:
-            try:
-                age = float(sys.argv[1])
-                height = float(sys.argv[2])
-                weight = float(sys.argv[3])
-                neighbor_products, top_product = recommend_products(age, height, weight, data, scaler, k_neighbors=5)
-                if neighbor_products is not None and top_product is not None:
-                    combined_products_set = set([top_product] + neighbor_products)
-                    combined_products = list(combined_products_set)
-                    print(json.dumps(combined_products))
-            except Exception as e:
-                print(f"Error occurred while processing input arguments: {str(e)}", file=sys.stderr)
+            age = float(sys.argv[1])
+            height = float(sys.argv[2])
+            weight = float(sys.argv[3])
+            neighbor_products, top_product = recommend_products(age, height, weight, data, scaler, k_neighbors=5)
+            combined_products_set = set([top_product] + neighbor_products)
+            combined_products = list(combined_products_set)
+            print(json.dumps(combined_products))
+
+except Exception as e:
+    print(f"Error occurred: {str(e)}", file=sys.stderr)
+
