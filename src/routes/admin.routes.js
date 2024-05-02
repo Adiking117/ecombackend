@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { upload } from "../middlewares/multer.middlewares.js"
-import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, completeOrder, getPlacedOrders, getDeliveredOrders, addExercises, veiwAllExercises, viewExercise, deleteExercise, viewGreviences, viewUserGrevience, responseForEmployement, getAllAvailableDeliveryPartners, assignOrder, getShippingOrders, getApprovedOrders, getChurnedUsers, userLikelyToBeChurned, getNeggaUsers, userNegativeReviews, sendNotificationsToUser } from "../controllers/admin.controllers.js";
+import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, completeOrder, getPlacedOrders, getDeliveredOrders, addExercises, veiwAllExercises, viewExercise, deleteExercise, viewGreviences, viewUserGrevience, responseForEmployement, getAllAvailableDeliveryPartners, assignOrder, getShippingOrders, getApprovedOrders, getChurnedUsers, userLikelyToBeChurned, getNeggaUsers, userNegativeReviews, sendNotificationsToUser, findSimilarUsers } from "../controllers/admin.controllers.js";
 
 const adminRouter = Router();
 
@@ -155,4 +155,10 @@ adminRouter.route("/view/sentiments/getUsers").get(verifyJWT,authorizeRoles(["ad
 
 // Notifications
 adminRouter.route("/view/users/:id/sendNot").put(verifyJWT,authorizeRoles(["admin","superadmin"]),sendNotificationsToUser)
+
+
+// Similar USers
+adminRouter.route("/view/users/:id/findSim").get(verifyJWT,authorizeRoles(["admin","superadmin"]),findSimilarUsers)
+
+
 export default adminRouter

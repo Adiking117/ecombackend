@@ -10,7 +10,8 @@ import { Shipping } from "../models/shipping.models.js"
 import { Notification } from "../models/notifications.models.js"
 import { UserHistory } from "../models/userHistory.models.js"
 import { Review } from "../models/review.models.js"
-
+import * as fs from 'fs';
+import { fileLocation,recommendations } from "../filelocation.js"
 
 const generateUserAccessRefreshToken = async function(user_id){
     try {
@@ -1038,6 +1039,21 @@ const deleteAllNotifications = asyncHandler(async(req,res)=>{
 })
 
 
+// exercise
+const getExercisePage = asyncHandler(async(req,res)=>{
+    const filePath = recommendations+"/exercises/Exercise.html"
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404);
+        res.end('File not found!');
+      } else {
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.end(data);
+      }
+    });
+  })
+
+
 export {
     startSession,
     endSession,
@@ -1074,5 +1090,6 @@ export {
     getAllNotications,
     getNotificationById,
     deleteAllNotifications,
-    deleteNotificationById
+    deleteNotificationById,
+    getExercisePage
 }

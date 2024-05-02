@@ -1026,9 +1026,36 @@ const userNegativeReviews = asyncHandler(async(req, res) => {
 });
 
 
-const findSimilarUsers = asyncHandler(async(req,res)=>{
-    
-})
+const findSimilarUsers = asyncHandler(async (req, res) => {
+    const targetUserHistory = await UserHistory.findOne({ user: req.params.id });
+
+    const targetProducts = targetUserHistory.productsPurchased.map(item => item.product.name.toString());
+
+    const allUsersHistory = await UserHistory.find({ user: { $ne: req.params.id } }).populate('user','userName firstName lastName');
+
+    const similarUsers = [];
+    for (const userHistory of allUsersHistory) {
+        const otherUserProducts = userHistory.productsPurchased.map(item => item.product.name.toString());
+        const intersection = targetProducts.filter(product => otherUserProducts.includes(product));
+        const union = [...new Set([...targetProducts, ...otherUserProducts])];
+        const similarity = intersection.length / union.length;
+        similarUsers.push({
+            user: userHistory.user._id,
+            userName : userHistory.user.userName,
+            firstName: userHistory.user.firstName,
+            lastName : userHistory.user.lastName,
+            similarity,
+        });
+    }
+
+    similarUsers.sort((a, b) => b.similarity - a.similarity);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,similarUsers,"Similar User fetched successfully")
+    )
+});
 
 
 const sendNotificationsToUser = asyncHandler(async(req,res)=>{

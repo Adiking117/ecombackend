@@ -1,0 +1,129 @@
+*{
+    
+}
+#intro{
+    background: linear-gradient(45deg, #0bd2de, #0083f9);
+    color: whitesmoke;
+    padding: 50px;
+}
+
+#intro h1{
+    font-size: 80px;
+    font-family:  monospace;
+}
+
+#intro h3{
+    font-size: 30px;
+    font-family:  monospace;
+}
+
+#intro button{
+    border-radius: 40px;
+    font-size:xx-large;
+    background-color: transparent;
+    color: whitesmoke;
+    border:3px solid whitesmoke;
+    padding:10px ;
+    box-shadow: 0px 9px 30px -15px rgb(0 0 0);
+
+}
+
+#intro button:hover{
+    
+    transform: scale(1.1);
+}
+
+#disclaimer{
+    background: transparent;
+    padding: 50px;
+    display: flex;
+    
+    
+}
+
+#left-col{
+    width: 40%;
+    font-family: monospace;
+    
+}
+
+#left-col h1{
+    font-size: 50px;
+    color: #1c2833;
+    
+}
+
+#left-col p{
+    font-size: 20px;
+    padding: 10px;
+    color: #1c2833b1;
+}
+
+#right-col{
+    width: 60%;
+    display: block;
+    padding-left: 100px;
+    margin-bottom: 100px;
+
+}
+
+#bigimg{
+    border: 1px solid rgba(255, 255, 255, 0.188);
+    box-shadow: 0px 9px 30px -15px rgb(0 0 0);
+    text-decoration: none;
+    border-radius: 10px;
+}
+
+#exerciseblock{
+   
+    display: flex;
+    margin-bottom: 40px;
+    background: #e6eef5;
+}
+
+#exerciseblock img{
+    height: 200px;
+    width:250px;
+    border-radius: 4px;
+}
+
+
+#exersize{
+    width: 20%;
+    margin: 10px;
+    padding: 10px;
+    display: block;
+    height:min-content;
+    font-family: monospace;
+    margin-bottom: 50px;
+}
+
+#exersize h5{
+    font-size: 30px;
+    color: #1C2833;
+}
+
+#exersize p{
+    font-size: 18px;
+    margin-bottom: 20px;
+    color: #1c2833c1;
+    
+}
+
+#exersize a button{
+   
+    background: linear-gradient(45deg, #0bd2de, #0083f9);
+    border-radius: 30px;
+    font-size: 25px;
+    width: 50%;
+    margin-top: 30px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.188);
+    box-shadow: 0px 9px 30px -15px rgb(0 0 0);
+    text-decoration: none;
+    color: whitesmoke;
+}
+
+#exersize a button:hover{
+    transform: scale(1.1);
+}
