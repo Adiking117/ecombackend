@@ -13,7 +13,6 @@ import { fileLocation,recommendations } from "../filelocation.js"
 import { spawn } from 'child_process';
 import { Exercise } from "../models/exercise.models.js"
 import { UserHistory } from "../models/userHistory.models.js"
-import { combineSlices } from "@reduxjs/toolkit"
 
 
 const getRecommendedProductsByAgeHeightWeight = asyncHandler(async (req, res) => {
@@ -262,7 +261,6 @@ const getRecommendedProductsByTop5PurchasedProducts = asyncHandler(async (req, r
 
         pythonProcess.on('close', (code) => {
             if (code === 0) {
-                console.log(products)
             } else {
                 res.status(500).json({ error: 'An error occurred while running the Python script' });
             }
