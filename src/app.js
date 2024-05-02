@@ -9,7 +9,7 @@ import { IP } from './constants.js'
 const app = express();
 
 app.use(cors({
-    // origin: "http://localhost:3000",
+    //origin: "http://localhost:3000",
     // origin : `http://${process.env.IP}:3000`,
     origin : `http://${IP}:3000`,
     // origin : `http://192.168.29.71:3000`,

@@ -12,6 +12,7 @@ import { UserHistory } from "../models/userHistory.models.js"
 import { Review } from "../models/review.models.js"
 import * as fs from 'fs';
 import { fileLocation,recommendations } from "../filelocation.js"
+import { OrderTransaction } from "../models/orderTransaction.models.js"
 
 const generateUserAccessRefreshToken = async function(user_id){
     try {
@@ -859,12 +860,26 @@ const deleteWishlist = asyncHandler(async(req,res)=>{
 const buyCartProducts = asyncHandler(async(req,res)=>{
     const user = await User.findById(req.user._id);
     const userHistory = await UserHistory.findOne({user: user._id})
+    const transactionList = await OrderTransaction.find();
+    
     // console.log("user" ,user)
     let orderItems = [];
     let tax = 0.18;
     let totalPrice = 0;
     for(const item of user.cart){
         const productToBeOrdered = await Product.findById(item.product._id)
+        await OrderTransaction.findOneAndUpdate(
+            {},
+            {
+                $push: {
+                    transactionList: {
+                        user: user._id,
+                        products: productToBeOrdered.name
+                    }
+                }
+            },
+            { upsert: true } 
+        );
         if(!productToBeOrdered){
             throw new ApiError(401,"Product not found")
         }
@@ -1041,7 +1056,9 @@ const deleteAllNotifications = asyncHandler(async(req,res)=>{
 
 // exercise
 const getExercisePage = asyncHandler(async(req,res)=>{
-    const filePath = recommendations+"/exercises/Exercise.html"
+    // const filePath = recommendations+"/exercises/Exercise.html"
+    const filePath = recommendations+"/exercises/bicep_curl.html"
+
     fs.readFile(filePath, (err, data) => {
       if (err) {
         res.writeHead(404);
@@ -1051,7 +1068,7 @@ const getExercisePage = asyncHandler(async(req,res)=>{
         res.end(data);
       }
     });
-  })
+})
 
 
 export {
