@@ -13,6 +13,7 @@ import { fileLocation,recommendations } from "../filelocation.js"
 import { spawn } from 'child_process';
 import { Exercise } from "../models/exercise.models.js"
 import { UserHistory } from "../models/userHistory.models.js"
+import { combineSlices } from "@reduxjs/toolkit"
 
 
 const getRecommendedProductsByAgeHeightWeight = asyncHandler(async (req, res) => {
@@ -240,14 +241,18 @@ const getRecommendedProductsByTop5PurchasedProducts = asyncHandler(async (req, r
     try {
         const pythonProcess = spawn('python', [`${recommendations}/top5PurchasedProducts.py`]);
 
-        let top5ProductsOfAllTime = [];
+        let products = [];
 
         pythonProcess.stdout.on('data', async(data) => {
             const productsArray = data.toString().trim().split(',');
-            for(let p of productsArray){
-                const product = await Product.findOne({name : p.trim()})
-                top5ProductsOfAllTime.push(product)
-            }
+            const productPromises = productsArray.map(async p => {
+                const product = await Product.findOne({ name: p });
+                return product;
+            });
+            products = await Promise.all(productPromises);
+            return res.status(200).json(
+                new ApiResponse(200, products, "Top 5 products fetched successfully")
+            );
         });
 
         pythonProcess.stderr.on('data', (data) => {
@@ -257,9 +262,7 @@ const getRecommendedProductsByTop5PurchasedProducts = asyncHandler(async (req, r
 
         pythonProcess.on('close', (code) => {
             if (code === 0) {
-                res.status(200).json(
-                    new ApiResponse(200,top5ProductsOfAllTime,"Top 5 products Fetched successfully")
-                );
+                console.log(products)
             } else {
                 res.status(500).json({ error: 'An error occurred while running the Python script' });
             }
@@ -269,6 +272,7 @@ const getRecommendedProductsByTop5PurchasedProducts = asyncHandler(async (req, r
         res.status(500).json({ error: 'An error occurred' });
     }
 });
+
 
 
 const getRecommendedProductsByRecentlyPurchasedProducts = asyncHandler(async(req,res)=>{

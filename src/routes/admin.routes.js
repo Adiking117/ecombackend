@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { upload } from "../middlewares/multer.middlewares.js"
-import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, completeOrder, getPlacedOrders, getDeliveredOrders, addExercises, veiwAllExercises, viewExercise, deleteExercise, viewGreviences, viewUserGrevience, responseForEmployement, getAllAvailableDeliveryPartners, assignOrder, getShippingOrders, getApprovedOrders, getChurnedUsers, userLikelyToBeChurned, getNeggaUsers, userNegativeReviews } from "../controllers/admin.controllers.js";
+import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, completeOrder, getPlacedOrders, getDeliveredOrders, addExercises, veiwAllExercises, viewExercise, deleteExercise, viewGreviences, viewUserGrevience, responseForEmployement, getAllAvailableDeliveryPartners, assignOrder, getShippingOrders, getApprovedOrders, getChurnedUsers, userLikelyToBeChurned, getNeggaUsers, userNegativeReviews, sendNotificationsToUser } from "../controllers/admin.controllers.js";
 
 const adminRouter = Router();
 
@@ -152,4 +152,7 @@ adminRouter.route("/view/sentiments").put(verifyJWT,authorizeRoles(["admin","sup
 
 adminRouter.route("/view/sentiments/getUsers").get(verifyJWT,authorizeRoles(["admin","superadmin"]),userNegativeReviews)
 
+
+// Notifications
+adminRouter.route("/view/users/:id/sendNot").put(verifyJWT,authorizeRoles(["admin","superadmin"]),sendNotificationsToUser)
 export default adminRouter

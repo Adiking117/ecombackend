@@ -1031,6 +1031,19 @@ const findSimilarUsers = asyncHandler(async(req,res)=>{
 })
 
 
+const sendNotificationsToUser = asyncHandler(async(req,res)=>{
+    const user = await User.findById(req.params.id);
+    const {message} = req.body;
+    const notification = await Notification.create({
+        user:user._id,
+        message:message
+    })
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,notification,"Notification Sent Successfully")
+    )
+})
 
 
 export{
@@ -1069,5 +1082,7 @@ export{
     getChurnedUsers,
     userLikelyToBeChurned,
     getNeggaUsers,
-    userNegativeReviews
+    userNegativeReviews,
+    findSimilarUsers,
+    sendNotificationsToUser
 }
