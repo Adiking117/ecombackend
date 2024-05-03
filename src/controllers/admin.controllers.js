@@ -22,6 +22,7 @@ import cron from 'node-cron';
 import { WebsiteChurn } from "../models/websiteChurn.models.js"
 import { ReviewSentiment } from "../models/sentimentAnal.models.js"
 import mongoose from "mongoose"
+import { CartAbandon } from "../models/cartAbondon.models.js"
 // get all users , get a user detail
 const getAllUser = asyncHandler(async(req,res)=>{
     const user = await User.find({role:{ $nin: ["superadmin"] }}).select("-password");
@@ -842,7 +843,7 @@ const userLikelyToBeChurned = asyncHandler(async (req, res) => {
         const pythonScriptPath = recommendations + "/churning/websiteChurn.py";
 
         const pythonProcess = spawn('python', [pythonScriptPath]);
-        let usersToBeChurned = [];
+        let userWhoWillAbandon = [];
 
         pythonProcess.stdout.on('data', async (data) => {
             try {
@@ -850,9 +851,9 @@ const userLikelyToBeChurned = asyncHandler(async (req, res) => {
                 const arrayOfStrings = cleanedData.slice(1, -1).split(" ").map(str => str.replace(/'/g, '').trim());
                 for(const u of arrayOfStrings){
                     const user = await User.findById(u)
-                    usersToBeChurned.push(user.toObject())
+                    userWhoWillAbandon.push(user.toObject())
                 }
-                return res.status(200).json(new ApiResponse(200, usersToBeChurned, "User Churned List fetched Successfully"));
+                return res.status(200).json(new ApiResponse(200, userWhoWillAbandon, "User Churned List fetched Successfully"));
             } catch (error) {
                 console.error("Error processing churned users:", error);
                 // Handle error processing data without crashing Node.js server
@@ -1028,23 +1029,25 @@ const userNegativeReviews = asyncHandler(async(req, res) => {
 
 const findSimilarUsers = asyncHandler(async (req, res) => {
     const targetUserHistory = await UserHistory.findOne({ user: req.params.id });
-
     const targetProducts = targetUserHistory.productsPurchased.map(item => item.product.name.toString());
-
     const allUsersHistory = await UserHistory.find({ user: { $ne: req.params.id } }).populate('user','userName firstName lastName');
 
     const similarUsers = [];
+    const intersectionProducts = []
     for (const userHistory of allUsersHistory) {
+        const intersectionProducts = userHistory.productsPurchased.filter(p => !targetProducts.includes(p.product.name.toString()));
         const otherUserProducts = userHistory.productsPurchased.map(item => item.product.name.toString());
         const intersection = targetProducts.filter(product => otherUserProducts.includes(product));
         const union = [...new Set([...targetProducts, ...otherUserProducts])];
         const similarity = intersection.length / union.length;
+
         similarUsers.push({
             user: userHistory.user._id,
             userName : userHistory.user.userName,
             firstName: userHistory.user.firstName,
             lastName : userHistory.user.lastName,
             similarity,
+            intersectionProducts
         });
     }
 
@@ -1072,6 +1075,104 @@ const sendNotificationsToUser = asyncHandler(async(req,res)=>{
     )
 })
 
+
+const getAbandonUsers = asyncHandler(async(req,res)=>{
+    const users = await CartAbandon.find();
+
+    const workbook = new excel.Workbook();
+    const worksheet = workbook.addWorksheet('Cart Abandon Users');
+
+    worksheet.columns = [
+        { header: 'ID', key: 'user', width: 15 },
+        { header: 'No_Items_Added_InCart', key: 'itemsAddedToCart', width: 20 },
+        { header: 'No_Items_Removed_FromCart', key: 'itemsRemovedFromCart', width: 25 },
+        { header: 'No_Cart_Viewed', key: 'timescartViewed', width: 20 },
+        { header: 'No_Checkout_Confirmed', key: 'timesCheckoutConfirmed', width: 30 },
+        { header: 'No_Checkout_Initiated ', key: 'timesCheckoutInitiated', width: 30 },
+        { header: 'No_Customer_Login', key: 'timesLogIn', width: 20 },
+        { header: 'No_Page_Viewed', key: 'timesPageViewed', width: 25 },
+    ];
+
+    users.forEach(user => {
+        worksheet.addRow({
+            user: user.user,
+            itemsAddedToCart: user.itemsAddedToCart,
+            itemsRemovedFromCart: user.itemsRemovedFromCart,
+            timescartViewed: user.timescartViewed,
+            timesCheckoutConfirmed: user.timesCheckoutConfirmed,
+            timesCheckoutInitiated: user.timesCheckoutInitiated,
+            timesLogIn: user.timesLogIn,
+            timesPageViewed: user.timesPageViewed,
+        });
+    });
+
+    const filePath = fileLocation + '/abandon.xlsx';
+    try {
+        await workbook.xlsx.writeFile(filePath);
+    } catch (error) {
+        console.error('Error writing Excel file:', error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,users,"Users added successfully")
+    )
+})
+
+
+const findAbandonUsers = asyncHandler(async(req,res)=>{
+    try {
+        const pythonScriptPath = recommendations + "/abandon/cartabandon.py";
+
+        const pythonProcess = spawn('python', [pythonScriptPath]);
+        let userWhoWillAbandon = [];
+
+        pythonProcess.stdout.on('data', async (data) => {
+            try {
+                const cleanedData = data.toString().trim();
+                const arrayOfStrings = cleanedData.slice(1, -1).split(" ").map(str => str.replace(/'/g, '').replace(/,/g, '').trim());
+                for(const u of arrayOfStrings){
+                    const user = await User.findById(u);
+                    userWhoWillAbandon.push(user.toObject());
+                }
+                return res.status(200).json(new ApiResponse(200, userWhoWillAbandon, "User Abandon List fetched Successfully"));
+            } catch (error) {
+                console.error("Error processing churned users:", error);
+                // Handle error processing data without crashing Node.js server
+                return res.status(500).json({ message: 'Error processing churned users' });
+            }
+        });
+        
+        pythonProcess.stderr.on('data', (data) => {
+            console.error(`Error from Python script: ${data}`);
+            // Handle error from Python script without crashing Node.js server
+            return res.status(500).json({ message: 'Error from Python script' });
+        });
+
+        pythonProcess.on('close', (code) => {
+            if (code !== 0) {
+                console.error(`Python script exited with code ${code}`);
+                // Handle non-zero exit code without crashing Node.js server
+                return res.status(500).json({ message: 'Python script exited with non-zero code' });
+            } else {
+                console.log('Python script exited normally');
+            }
+        });
+
+        // Handle Python process error event
+        pythonProcess.on('error', (error) => {
+            console.error('Python process error:', error);
+            // Handle Python process error without crashing Node.js server
+            return res.status(500).json({ message: 'Python process error' });
+        });
+    } catch (error) {
+        console.error('Error in userLikelyToBeChurned function:', error);
+        // Handle unexpected errors without crashing Node.js server
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+})
 
 export{
     getAllUser,
@@ -1111,5 +1212,7 @@ export{
     getNeggaUsers,
     userNegativeReviews,
     findSimilarUsers,
-    sendNotificationsToUser
+    sendNotificationsToUser,
+    getAbandonUsers,
+    findAbandonUsers
 }

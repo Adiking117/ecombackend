@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { upload } from "../middlewares/multer.middlewares.js"
-import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, completeOrder, getPlacedOrders, getDeliveredOrders, addExercises, veiwAllExercises, viewExercise, deleteExercise, viewGreviences, viewUserGrevience, responseForEmployement, getAllAvailableDeliveryPartners, assignOrder, getShippingOrders, getApprovedOrders, getChurnedUsers, userLikelyToBeChurned, getNeggaUsers, userNegativeReviews, sendNotificationsToUser, findSimilarUsers } from "../controllers/admin.controllers.js";
+import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, completeOrder, getPlacedOrders, getDeliveredOrders, addExercises, veiwAllExercises, viewExercise, deleteExercise, viewGreviences, viewUserGrevience, responseForEmployement, getAllAvailableDeliveryPartners, assignOrder, getShippingOrders, getApprovedOrders, getChurnedUsers, userLikelyToBeChurned, getNeggaUsers, userNegativeReviews, sendNotificationsToUser, findSimilarUsers, getAbandonUsers, findAbandonUsers } from "../controllers/admin.controllers.js";
 
 const adminRouter = Router();
 
@@ -160,5 +160,8 @@ adminRouter.route("/view/users/:id/sendNot").put(verifyJWT,authorizeRoles(["admi
 // Similar USers
 adminRouter.route("/view/users/:id/findSim").get(verifyJWT,authorizeRoles(["admin","superadmin"]),findSimilarUsers)
 
+adminRouter.route("/view/cartAbandon").put(verifyJWT,authorizeRoles(["admin","superadmin"]),getAbandonUsers)
+
+adminRouter.route("/view/cartAbandon/getUsers").get(verifyJWT,authorizeRoles(["admin","superadmin"]),findAbandonUsers)
 
 export default adminRouter
