@@ -103,18 +103,21 @@ def find_frequent_item_sets_for_product(transactions, product_name, min_support)
 
 
 input_product = sys.argv[1]
-transactions = transactions = [
-['Peanut Butter Protein Powder', 'Protein Shake Ready-to-Drink (RTD)', 'Pre-Workout Supplement'],
-['Creatine Monohydrate', 'Mass Gainer Supplement', 'Whey Protein Powder', 'Peanut Butter Protein Powder'],
-['Creatine Monohydrate', 'Mass Gainer Supplement', 'Whey Protein Powder', 'Protein Shake Ready-to-Drink (RTD)'],
-['Creatine Monohydrate', 'Mass Gainer Supplement', 'Whey Protein Powder', 'Pre-Workout Supplement'],
-['Creatine Monohydrate', 'Mass Gainer Supplement', 'Peanut Butter Protein Powder', 'Protein Shake Ready-to-Drink (RTD)'],
-['Creatine Monohydrate', 'Mass Gainer Supplement', 'Peanut Butter Protein Powder', 'Pre-Workout Supplement'],
-['Creatine Monohydrate', 'Mass Gainer Supplement', 'Protein Shake Ready-to-Drink (RTD)', 'Pre-Workout Supplement'],
-['Creatine Monohydrate', 'Whey Protein Powder', 'Peanut Butter Protein Powder', 'Protein Shake Ready-to-Drink (RTD)'],
-['Creatine Monohydrate', 'Whey Protein Powder', 'Peanut Butter Protein Powder', 'Pre-Workout Supplement'],
-['Creatine Monohydrate', 'Whey Protein Powder', 'Protein Shake Ready-to-Drink (RTD)', 'Pre-Workout Supplement']
-]
+# transactions = transactions = [
+# ['Peanut Butter Protein Powder', 'Protein Shake Ready-to-Drink (RTD)', 'Pre-Workout Supplement'],
+# ['Creatine Monohydrate', 'Mass Gainer Supplement', 'Whey Protein Powder', 'Peanut Butter Protein Powder'],
+# ['Creatine Monohydrate', 'Mass Gainer Supplement', 'Whey Protein Powder', 'Protein Shake Ready-to-Drink (RTD)'],
+# ['Creatine Monohydrate', 'Mass Gainer Supplement', 'Whey Protein Powder', 'Pre-Workout Supplement'],
+# ['Creatine Monohydrate', 'Mass Gainer Supplement', 'Peanut Butter Protein Powder', 'Protein Shake Ready-to-Drink (RTD)'],
+# ['Creatine Monohydrate', 'Mass Gainer Supplement', 'Peanut Butter Protein Powder', 'Pre-Workout Supplement'],
+# ['Creatine Monohydrate', 'Mass Gainer Supplement', 'Protein Shake Ready-to-Drink (RTD)', 'Pre-Workout Supplement'],
+# ['Creatine Monohydrate', 'Whey Protein Powder', 'Peanut Butter Protein Powder', 'Protein Shake Ready-to-Drink (RTD)'],
+# ['Creatine Monohydrate', 'Whey Protein Powder', 'Peanut Butter Protein Powder', 'Pre-Workout Supplement'],
+# ['Creatine Monohydrate', 'Whey Protein Powder', 'Protein Shake Ready-to-Drink (RTD)', 'Pre-Workout Supplement']
+# ]
+
+transactions_json = sys.argv[2] 
+transactions = json.loads(transactions_json)
 min_support = 3  
 frequent_item_sets = find_frequent_item_sets_for_product(transactions, input_product, min_support)
 all_frequent_products = [product for item_set in frequent_item_sets for product in item_set]

@@ -1033,7 +1033,6 @@ const findSimilarUsers = asyncHandler(async (req, res) => {
     const allUsersHistory = await UserHistory.find({ user: { $ne: req.params.id } }).populate('user','userName firstName lastName');
 
     const similarUsers = [];
-    const intersectionProducts = []
     for (const userHistory of allUsersHistory) {
         const intersectionProducts = userHistory.productsPurchased.filter(p => !targetProducts.includes(p.product.name.toString()));
         const otherUserProducts = userHistory.productsPurchased.map(item => item.product.name.toString());
@@ -1041,14 +1040,16 @@ const findSimilarUsers = asyncHandler(async (req, res) => {
         const union = [...new Set([...targetProducts, ...otherUserProducts])];
         const similarity = intersection.length / union.length;
 
-        similarUsers.push({
-            user: userHistory.user._id,
-            userName : userHistory.user.userName,
-            firstName: userHistory.user.firstName,
-            lastName : userHistory.user.lastName,
-            similarity,
-            intersectionProducts
-        });
+        if(similarity !== 0){
+            similarUsers.push({
+                user: userHistory.user._id,
+                userName : userHistory.user.userName,
+                firstName: userHistory.user.firstName,
+                lastName : userHistory.user.lastName,
+                similarity,
+                intersectionProducts
+            });
+        }
     }
 
     similarUsers.sort((a, b) => b.similarity - a.similarity);
@@ -1059,6 +1060,7 @@ const findSimilarUsers = asyncHandler(async (req, res) => {
         new ApiResponse(200,similarUsers,"Similar User fetched successfully")
     )
 });
+
 
 
 const sendNotificationsToUser = asyncHandler(async(req,res)=>{
@@ -1174,6 +1176,39 @@ const findAbandonUsers = asyncHandler(async(req,res)=>{
     }
 })
 
+
+const groupNotifications = asyncHandler(async(req,res)=>{
+    const {listOfUsers , message} = req.body;
+    for(const u of listOfUsers){
+        await Notification.create({
+            user:u.toString(),
+            message:message
+        })
+    }
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,{},"Notification created successfully")
+    )
+})
+
+
+const recommendProductsBySimilarity = asyncHandler(async(req,res)=>{
+    const {userId,productId} = req.body;
+    const product = await Product.findById(productId)
+    const updatedHistory = await UserHistory.findByIdAndUpdate(
+        { user: userId },
+        { $push: { recommendedByAdmin: product } },
+        { new: true, upsert: true }
+    );
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,updatedHistory,"Product recommended successfully")
+    )
+})
+
+
 export{
     getAllUser,
     getUser,
@@ -1214,5 +1249,7 @@ export{
     findSimilarUsers,
     sendNotificationsToUser,
     getAbandonUsers,
-    findAbandonUsers
+    findAbandonUsers,
+    groupNotifications,
+    recommendProductsBySimilarity
 }

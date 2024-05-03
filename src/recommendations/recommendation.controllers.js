@@ -13,7 +13,7 @@ import { fileLocation,recommendations } from "../filelocation.js"
 import { spawn } from 'child_process';
 import { Exercise } from "../models/exercise.models.js"
 import { UserHistory } from "../models/userHistory.models.js"
-
+import { OrderTransaction } from "../models/orderTransaction.models.js"
 
 const getRecommendedProductsByAgeHeightWeight = asyncHandler(async (req, res) => {
     try {
@@ -87,15 +87,10 @@ const getRecommendedProductsByGoalGender = asyncHandler(async (req, res) => {
 
 const getRecommendedProductsByFrequentlyBuying = asyncHandler(async(req, res) => {
     try {
-        const orders = await Order.find();
-        let transactions = [];
-
-        for (const o of orders) {
-            let t = new Set();
-            o.orderItems.forEach((item) => {
-                t.add(item.name);
-            });
-            transactions.push(Array.from(t)); 
+        const transactions = await OrderTransaction.findOne()
+        let transactionList = [];
+        for(const t of transactions.transactionList){
+            transactionList.push(t.products)
         }
 
         const productId = req.params.id;
@@ -108,7 +103,7 @@ const getRecommendedProductsByFrequentlyBuying = asyncHandler(async(req, res) =>
         const pythonProcess = spawn('python', [
             recommendations+'/apriori.py', 
             product.name, 
-            JSON.stringify(transactions)
+            JSON.stringify(transactionList)
         ]);
 
         let productsArray = [];
@@ -116,6 +111,7 @@ const getRecommendedProductsByFrequentlyBuying = asyncHandler(async(req, res) =>
         pythonProcess.stdout.on('data', (data) => {
             const productsString = data.toString().trim();
             const receivedProducts = JSON.parse(productsString);
+            console.log(receivedProducts)
             productsArray.push(...receivedProducts);
         });
 
@@ -156,11 +152,21 @@ const getRecommendedProductsByFrequentlyBuying = asyncHandler(async(req, res) =>
 
 const getRecommendedProductsByFrequentlyBuyingStorePage = asyncHandler(async(req, res) => {
     try {
+        const transactions = await OrderTransaction.findOne()
+        let transactionList = [];
+        for(const t of transactions.transactionList){
+            transactionList.push(t.products)
+        }
+
         const orderHistory = req.user.orderHistory;
         const lastOrder = orderHistory[orderHistory.length - 1];
         const lastOrderItem = lastOrder?.orderItems[lastOrder.orderItems.length - 1];
 
-        const pythonProcess = spawn('python', [`${recommendations}/apriori.py`, lastOrderItem?.name]);
+        const pythonProcess = spawn('python', [
+            `${recommendations}/apriori.py`, 
+            lastOrderItem?.name,
+            JSON.stringify(transactionList)
+        ]);
 
         let productsArray = [];
 
@@ -289,9 +295,14 @@ const getRecommendedProductsByRecentlyPurchasedProducts = asyncHandler(async(req
 const getRecommendedProductsByRecentlyViewedProducts = asyncHandler(async(req,res)=>{
     const user = req.user
     const userHistory = await UserHistory.findOne({user:user._id})
-    const recentViewedProducts = userHistory.productsViewed.filter((p)=>{
-        return p.count >= 3
-    })
+    let recentViewedProducts = [];
+    for(const u of userHistory.productsViewed){
+        if(u.count>=3){
+            const product = await Product.findById(u.product.toString())
+            recentViewedProducts.push(product.toObject())
+        }
+    }
+
     const recentlyViewed = recentViewedProducts.slice(-6);
 
     return res
@@ -324,36 +335,43 @@ const getRecommendedProductsByTimeLine = asyncHandler(async (req, res) => {
     const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate());
 
     try {
-        const user = await User.findById(userId)
         const recommendedProducts = {
             last7Days: [],
             last2Weeks: [],
             lastMonth: []
         };
 
-        const userHistory = await UserHistory.findOne({user:user._id})
+        const userHistory = await UserHistory.findOne({ user: userId });
 
         userHistory.productsPurchased.forEach((p) => {
-            if (new Date(p.addedAt) >= last7Days) {
+            const addedDate = new Date(p.addedAt);
+
+            if (addedDate >= last7Days) {
                 recommendedProducts.last7Days.push(p.product);
             }
-            if (new Date(p.addedAt) >= last2Weeks) {
+            if (addedDate >= last2Weeks) {
                 recommendedProducts.last2Weeks.push(p.product);
             }
-            if (new Date(p.addedAt) >= lastMonth) {
+            if (addedDate >= lastMonth) {
                 recommendedProducts.lastMonth.push(p.product);
             }
         });
 
+        // Slice arrays to contain at most two elements
+        recommendedProducts.last7Days = recommendedProducts.last7Days.slice(0, 2);
+        recommendedProducts.last2Weeks = recommendedProducts.last2Weeks.slice(0, 2);
+        recommendedProducts.lastMonth = recommendedProducts.lastMonth.slice(0, 2);
+
         return res
-        .status(200)
-        .json(
-            new ApiResponse(200,recommendedProducts,"Products recommended")
-        );
+            .status(200)
+            .json(
+                new ApiResponse(200, recommendedProducts, "Products recommended")
+            );
     } catch (error) {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
 
 
 

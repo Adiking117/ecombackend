@@ -30,7 +30,7 @@ try:
     ids_prob_less_than_05 = []
 
     for idx, prob in zip(user_details_df['ID'], predicted_class_proba):
-        if prob < 0.5:
+        if prob > 0.5:
             ids_prob_less_than_05.append(idx.strip('"')) 
 
     print(ids_prob_less_than_05)
