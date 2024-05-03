@@ -1157,93 +1157,7 @@ const deleteAllNotifications = asyncHandler(async (req, res) => {
 });
 
 
-// exercise
-const getExercisePage = asyncHandler(async(req,res)=>{
-    const filePath = recommendations+"/exercises/Exercise.html"
 
-    fs.readFile(filePath, (err, data) => {
-      if (err) {
-        res.writeHead(404);
-        res.end('File not found!');
-      } else {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.end(data);
-      }
-    });
-})
-
-const getBicepCurl = asyncHandler(async(req,res)=>{
-    const filePath = recommendations+"/exercises/bicep_curl.html"
-
-    fs.readFile(filePath, (err, data) => {
-      if (err) {
-        res.writeHead(404);
-        res.end('File not found!');
-      } else {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.end(data);
-      }
-    });
-})
-
-const getDeadlift = asyncHandler(async(req,res)=>{
-    const filePath = recommendations+"/exercises/Deadlift.html"
-
-    fs.readFile(filePath, (err, data) => {
-      if (err) {
-        res.writeHead(404);
-        res.end('File not found!');
-      } else {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.end(data);
-      }
-    });
-})
-
-
-const getPushup = asyncHandler(async(req,res)=>{
-    const filePath = recommendations+"/exercises/pushup.html"
-
-    fs.readFile(filePath, (err, data) => {
-      if (err) {
-        res.writeHead(404);
-        res.end('File not found!');
-      } else {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.end(data);
-      }
-    });
-})
-
-
-const getShoulderPress = asyncHandler(async(req,res)=>{
-    const filePath = recommendations+"/exercises/ShoulderPress.html"
-
-    fs.readFile(filePath, (err, data) => {
-      if (err) {
-        res.writeHead(404);
-        res.end('File not found!');
-      } else {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.end(data);
-      }
-    });
-})
-
-
-const getSquat = asyncHandler(async(req,res)=>{
-    const filePath = recommendations+"/exercises/Squat.html"
-
-    fs.readFile(filePath, (err, data) => {
-      if (err) {
-        res.writeHead(404);
-        res.end('File not found!');
-      } else {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.end(data);
-      }
-    });
-})
 
 
 export {
@@ -1284,10 +1198,4 @@ export {
     getNotificationById,
     deleteAllNotifications,
     deleteNotificationById,
-    getExercisePage,
-    getBicepCurl,
-    getDeadlift,
-    getPushup,
-    getShoulderPress,
-    getSquat
 }

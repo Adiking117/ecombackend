@@ -1,6 +1,6 @@
 import { Router } from "express"
 
-import { registerUser,loginUser, updateUserProfile, logoutUser, getDetails, getAllProducts, getProduct, getProductsByCategory, addItemsToCart, viewCartItems, addCartItemQty, subCartItemQty, deleteCartItem, deleteCart, rateAndReviewProduct, editProductReview, deleteProductReveiw, addToWishlist, viewWishlist, deleteWishlistProduct, deleteWishlist, buyCartProducts, getMyOrders, getOrderHistory, updateShippingDetails, getProfile, getShippingDetails, buyAgainOrders, getAllNotications, getNotificationById, getProductsBySearch, getCityCountryProfileList, getExercisePage, deleteNotificationById, deleteAllNotifications, getBicepCurl, getDeadlift, getPushup, getShoulderPress, getSquat } from "../controllers/user.controllers.js"
+import { registerUser,loginUser, updateUserProfile, logoutUser, getDetails, getAllProducts, getProduct, getProductsByCategory, addItemsToCart, viewCartItems, addCartItemQty, subCartItemQty, deleteCartItem, deleteCart, rateAndReviewProduct, editProductReview, deleteProductReveiw, addToWishlist, viewWishlist, deleteWishlistProduct, deleteWishlist, buyCartProducts, getMyOrders, getOrderHistory, updateShippingDetails, getProfile, getShippingDetails, buyAgainOrders, getAllNotications, getNotificationById, getProductsBySearch, getCityCountryProfileList, deleteNotificationById, deleteAllNotifications, checkoutInitialization } from "../controllers/user.controllers.js"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { start,end } from "../middlewares/session.middlewares.js"
 import { getOrder, getProductReviews, viewGalleryImage, viewGalleryImages } from "../controllers/admin.controllers.js"
@@ -89,6 +89,8 @@ userRouter.route("/view/wishlist/:id/moveToCart").put(verifyJWT,addItemsToCart)
 
 
 // order
+userRouter.route("/buy").put(verifyJWT,checkoutInitialization)
+
 userRouter.route("/buy/products").post(verifyJWT,authorizeRoles(["user"]),buyCartProducts)
 
 userRouter.route("/view/orders").get(verifyJWT,getMyOrders)
@@ -145,18 +147,5 @@ userRouter.route("/view/orders/:id/sendOTP").post(verifyJWT,authorizeRoles(["emp
 
 userRouter.route("/view/orders/:id/verifyOTP").put(verifyJWT,authorizeRoles(["employee"]),otpVerification)
 
-
-// exercise
-userRouter.route("/view/exercise").get(verifyJWT,getExercisePage)
-
-userRouter.route("/view/exercise/bicep").get(verifyJWT,getBicepCurl)
-
-userRouter.route("/view/exercise/deadlift").get(verifyJWT,getDeadlift)
-
-userRouter.route("/view/exercise/pushup").get(verifyJWT,getPushup)
-
-userRouter.route("/view/exercise/shoulder").get(verifyJWT,getShoulderPress)
-
-userRouter.route("/view/exercise/squat").get(verifyJWT,getSquat)
 
 export default userRouter
