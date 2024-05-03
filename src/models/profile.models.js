@@ -36,6 +36,27 @@ const profileSchema = new mongoose.Schema({
     city:{
         type:String,
         required:true
+    },
+    bp:{
+        type:Number
+    },
+    bpLevel:{
+        type:String,
+        enum:["Low","Normal","High"]
+    },
+    diabetes:{
+        type:Number
+    },
+    diabetesLevel:{
+        type:String,
+        enum:["Low","Normal","High"]
+    },
+    cholesterol:{
+        type:Number
+    },
+    cholesterolLevel:{
+        type:String,
+        enum:["Low","Normal","High"]
     }
 },{timestamps:true})
 

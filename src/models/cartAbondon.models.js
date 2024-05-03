@@ -1,47 +1,43 @@
 import mongoose from 'mongoose'
 
 const cartAbandonSchema = new mongoose.Schema({
-    user_id:{
+    user:{
         type: mongoose.Schema.Types.ObjectId,
         ref:"User"
     },
-    userName:{
-        type:String
+    itemsAddedToCart:{
+        type:Number,
+        default:0
     },
-    age:{
-        type:Number
+    itemsRemovedFromCart:{
+        type:Number,
+        default:0
     },
-    gender:{
-        type:String
+    timescartViewed:{
+        type:Number,
+        default:0
     },
-    cartNow:[
-        {
-            product:{
-                type:mongoose.Schema.Types.ObjectId,
-                ref:"Product"
-            },
-            addedTime:{
-                type:Date
-            },
-        }
-    ],
-    cartPrice:{
-        type:Number
+    timesCheckoutConfirmed:{
+        type:Number,
+        default:0
     },
-    cartHistory:[
-        {
-            product:{
-                type:mongoose.Schema.Types.ObjectId,
-                ref:"Product"
-            },
-            exitTime:{
-                type:Date
-            },
-            totalTime:{
-                type:Date
-            }
-        }
-    ]
+    timesCheckoutInitiated:{
+        type:Number,
+        default:0
+    },
+    timesLogIn:{
+        type:Number,
+        default:0
+    },
+    timesPageViewed:{
+        type:Number,
+        default:0
+    },
+    createdAt: {
+        type: Date,
+        expires: 1209600,
+        default: Date.now
+    }   
 },{
     timestamps:true
 })

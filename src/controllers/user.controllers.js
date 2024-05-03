@@ -13,6 +13,10 @@ import { Review } from "../models/review.models.js"
 import * as fs from 'fs';
 import { fileLocation,recommendations } from "../filelocation.js"
 import { OrderTransaction } from "../models/orderTransaction.models.js"
+import { CartAbandon } from "../models/cartAbondon.models.js"
+import path from "path"
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 const generateUserAccessRefreshToken = async function(user_id){
     try {
@@ -124,6 +128,15 @@ const loginUser = asyncHandler(async(req,res)=>{
         // secure:true,
     }
 
+    await CartAbandon.findOneAndUpdate(
+        {user:user._id},
+        {
+            $inc: { timesLogIn: 1 }
+        },
+        {
+            upsert:true
+        }
+    )
 
     return res
     .status(200)
@@ -176,18 +189,22 @@ const updateUserProfile = asyncHandler(async(req,res)=>{
         //console.log("req user updateuserprofile",req.user)
         //console.log("req body updateuserprofile",req.body)
 
-        const { age, weight, height, goal, gender, country, city } = req.body;
+        const { age, weight, height, goal, gender, country, city, systolicBp , diastolicBp , diabetes,cholesterol } = req.body;
     
-        if (!age || !weight || !height || !goal || !gender || !country || !city) {
+        if (!age || !weight || !height || !goal || !gender || !country || !city || !bp || !diabetes || !cholesterol) {
           throw new ApiError(400, "All fields are required");
         }
         
         // let profile = await Profile.findById(req.user.userProfile.toString());
         let profile = await Profile.findOne({user:req.user._id})
-        console.log(profile)
-        
+        //console.log(profile)
+        const bp = systolicBp / diastolicBp;
+        const bpLevel = (bp < 0.9) ? "Low":(bp >= 0.9 && bp <= 1.2) ? "Normal" :"High"
+        const diabetesLevel = (diabetes < 100) ? "Low" :(diabetes >= 100 && diabetes < 125) ? "Normal" :"High";
+        const cholesterolLevel = (cholesterol < 200) ? "Low" :(cholesterol >= 200 && cholesterol < 240) ? "Normal" :"High";
+
         if (!profile) {
-          profile = new Profile({user: req.user._id,age,weight,height,goal,gender,country,city,});
+          profile = new Profile({user: req.user._id,age,weight,height,goal,gender,country,city,bp ,bpLevel, diabetes,diabetesLevel, cholesterol,cholesterolLevel});
         } else {
           profile.age = age;
           profile.weight = weight;
@@ -196,6 +213,12 @@ const updateUserProfile = asyncHandler(async(req,res)=>{
           profile.gender = gender;
           profile.country = country;
           profile.city = city;
+          profile.bp = bp;
+          profile.bpLevel = bpLevel;
+          profile.diabetes = diabetes;
+          profile.diabetesLevel = diabetesLevel;
+          profile.cholesterol = cholesterol;
+          profile.cholesterolLevel = cholesterolLevel;
         }
     
         await profile.save();
@@ -487,6 +510,16 @@ const getProduct = asyncHandler(async(req,res)=>{
     }
     await userHistory.save();
 
+    await CartAbandon.findOneAndUpdate(
+        {user:user._id},
+        {
+            $inc: { timesPageViewed: 1 }
+        },
+        {
+            upsert:true
+        }
+    )
+
     return res
     .status(200)
     .json(
@@ -692,6 +725,15 @@ const addItemsToCart = asyncHandler(async(req,res)=>{
     await user.addToCart(productid);
 
     await user.save();
+    await CartAbandon.findOneAndUpdate(
+        {user:req.user._id},
+        {
+            $inc: { itemsAddedToCart: 1 }
+        },
+        {
+            upsert:true
+        }
+    )
 
     return res
     .status(200)
@@ -708,6 +750,15 @@ const viewCartItems = asyncHandler(async(req,res)=>{
     }
     const cartItems = user.cart
     // console.log(cartItems)
+    await CartAbandon.findOneAndUpdate(
+        {user:req.user._id},
+        {
+            $inc: { timescartViewed: 1 }
+        },
+        {
+            upsert:true
+        }
+    )
     return res
     .status(200)
     .json(
@@ -753,6 +804,15 @@ const deleteCartItem = asyncHandler(async(req,res)=>{
     }
     const user = req.user
     await user.deleteFromCart(productid)
+    await CartAbandon.findOneAndUpdate(
+        {user:req.user._id},
+        {
+            $inc: { itemsRemovedFromCart: 1 }
+        },
+        {
+            upsert:true
+        }
+    )
     return res
     .status(200)
     .json(
@@ -763,6 +823,11 @@ const deleteCartItem = asyncHandler(async(req,res)=>{
 
 const deleteCart = asyncHandler(async(req,res)=>{
     const user = req.user
+    await CartAbandon.findOneAndUpdate(
+        { user: user._id },
+        { $inc: { itemsRemovedFromCart: user.cart.length } },
+        { upsert: true }
+    );
     user.cart = []
     await user.save();
     return res
@@ -860,26 +925,15 @@ const deleteWishlist = asyncHandler(async(req,res)=>{
 const buyCartProducts = asyncHandler(async(req,res)=>{
     const user = await User.findById(req.user._id);
     const userHistory = await UserHistory.findOne({user: user._id})
-    const transactionList = await OrderTransaction.find();
     
     // console.log("user" ,user)
     let orderItems = [];
     let tax = 0.18;
     let totalPrice = 0;
+    let productsinTransaction = []
     for(const item of user.cart){
         const productToBeOrdered = await Product.findById(item.product._id)
-        await OrderTransaction.findOneAndUpdate(
-            {},
-            {
-                $push: {
-                    transactionList: {
-                        user: user._id,
-                        products: productToBeOrdered.name
-                    }
-                }
-            },
-            { upsert: true } 
-        );
+        productsinTransaction.push(productToBeOrdered.name)
         if(!productToBeOrdered){
             throw new ApiError(401,"Product not found")
         }
@@ -909,6 +963,28 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
         totalPrice += (price*item.quantity);
         productToBeOrdered.save();
     }
+    await OrderTransaction.findOneAndUpdate(
+        {},
+        {
+            $push: {
+                transactionList: {
+                    user: user._id,
+                    products: productsinTransaction
+                }
+            }
+        },
+        { upsert: true }
+    );
+    await CartAbandon.findOneAndUpdate(
+        {user:req.user._id},
+        {
+            $inc: { timesCheckoutConfirmed: 1 }
+        },
+        {
+            upsert:true
+        }
+    )
+
     let subtotalPrice = totalPrice + (totalPrice*tax);
     const {paymentMethod} = req.body;
     const shippingInfo = await Shipping.findById(user.shippingInfo.toString())
@@ -957,6 +1033,24 @@ const buyCartProducts = asyncHandler(async(req,res)=>{
         new ApiResponse(200,order,"Order Placed successfully")
     )
 
+})
+
+
+const checkoutInitialization = asyncHandler(async(req,res)=>{
+    await CartAbandon.findOneAndUpdate(
+        {user:req.user._id},
+        {
+            $inc: { timesCheckoutInitiated: 1 }
+        },
+        {
+            upsert:true
+        }
+    )
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,{},"Checkout Initiated")
+    )
 })
 
 
@@ -1044,20 +1138,101 @@ const getNotificationById = asyncHandler(async(req,res)=>{
 });
 
 
-const deleteNotificationById = asyncHandler(async(req,res)=>{
+const deleteNotificationById = asyncHandler(async (req, res) => {
+    try {
+        await Notification.findByIdAndDelete(req.params.id);
+        return res.status(200).json(new ApiResponse(200, {}, "Notification deleted successfully"));
+    } catch (error) {
+        throw new ApiError(500,"Problem in deleting a notification")
+    }
+});
 
-})
-
-
-const deleteAllNotifications = asyncHandler(async(req,res)=>{
-
-})
+const deleteAllNotifications = asyncHandler(async (req, res) => {
+    try {
+        await Notification.deleteMany({ user: req.user._id });
+        return res.status(200).json(new ApiResponse(200, {}, "Notifications deleted successfully"));
+    } catch (error) {
+        throw new ApiError(500,"Problem in deleting notifications")
+    }
+});
 
 
 // exercise
 const getExercisePage = asyncHandler(async(req,res)=>{
-    // const filePath = recommendations+"/exercises/Exercise.html"
+    const filePath = recommendations+"/exercises/Exercise.html"
+
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404);
+        res.end('File not found!');
+      } else {
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.end(data);
+      }
+    });
+})
+
+const getBicepCurl = asyncHandler(async(req,res)=>{
     const filePath = recommendations+"/exercises/bicep_curl.html"
+
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404);
+        res.end('File not found!');
+      } else {
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.end(data);
+      }
+    });
+})
+
+const getDeadlift = asyncHandler(async(req,res)=>{
+    const filePath = recommendations+"/exercises/Deadlift.html"
+
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404);
+        res.end('File not found!');
+      } else {
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.end(data);
+      }
+    });
+})
+
+
+const getPushup = asyncHandler(async(req,res)=>{
+    const filePath = recommendations+"/exercises/pushup.html"
+
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404);
+        res.end('File not found!');
+      } else {
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.end(data);
+      }
+    });
+})
+
+
+const getShoulderPress = asyncHandler(async(req,res)=>{
+    const filePath = recommendations+"/exercises/ShoulderPress.html"
+
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404);
+        res.end('File not found!');
+      } else {
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.end(data);
+      }
+    });
+})
+
+
+const getSquat = asyncHandler(async(req,res)=>{
+    const filePath = recommendations+"/exercises/Squat.html"
 
     fs.readFile(filePath, (err, data) => {
       if (err) {
@@ -1101,6 +1276,7 @@ export {
     deleteWishlistProduct,
     deleteWishlist,
     buyCartProducts,
+    checkoutInitialization,
     getMyOrders,
     getOrderHistory,
     buyAgainOrders,
@@ -1108,5 +1284,10 @@ export {
     getNotificationById,
     deleteAllNotifications,
     deleteNotificationById,
-    getExercisePage
+    getExercisePage,
+    getBicepCurl,
+    getDeadlift,
+    getPushup,
+    getShoulderPress,
+    getSquat
 }
