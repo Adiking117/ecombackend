@@ -1194,9 +1194,9 @@ const groupNotifications = asyncHandler(async(req,res)=>{
 
 
 const recommendProductsBySimilarity = asyncHandler(async(req,res)=>{
-    const {userId,productId} = req.body;
+    const {userId,productId} = req.params;
     const product = await Product.findById(productId)
-    const updatedHistory = await UserHistory.findByIdAndUpdate(
+    const updatedHistory = await UserHistory.findOneAndUpdate(
         { user: userId },
         { $push: { recommendedByAdmin: product } },
         { new: true, upsert: true }
@@ -1298,15 +1298,15 @@ const customRecommendations = asyncHandler(async(req,res)=>{
             try {
                 const goal = data.toString().trim().toLowerCase();
                 const productsWithGoal = products[goal].sort(() => Math.random() - 0.5).slice(0, 4);
-                let listOfProductsAsPerTheGoal = [];
+                // let listOfProductsAsPerTheGoal = [];
                 for(const p of productsWithGoal){
                     const product = await Product.findOne({name:p})
-                    listOfProductsAsPerTheGoal.push(product.toObject())
+                    user.recommendedByAdmin.push(product.toObject())
                 }
                 return res
                 .status(200)
                 .json(
-                    new ApiResponse(200, listOfProductsAsPerTheGoal, "Products as per goal fetched succeesfully")
+                    new ApiResponse(200, productsWithGoal, "Products as per goal recommended succeesfully")
                 );
             } catch (error) {
                 console.error("Error processing churned users:", error);

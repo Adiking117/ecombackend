@@ -373,6 +373,14 @@ const getRecommendedProductsByTimeLine = asyncHandler(async (req, res) => {
 });
 
 
+const getRecommendedProductsByAdmin = asyncHandler(async(req,res)=>{
+    const user = await UserHistory.findOne({user:req.user._id})
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user.recommendedByAdmin,"Admin Recommednation successfully")
+    )
+})
 
 
 
@@ -387,5 +395,6 @@ export {
     getRecommendedProductsByRecentlyPurchasedProducts,
     getRecommendedProductsByRecentlySearchedProducts,
     getRecommendedProductsByRecentlyViewedProducts,
-    getRecommendedProductsByTimeLine
+    getRecommendedProductsByTimeLine,
+    getRecommendedProductsByAdmin
 }

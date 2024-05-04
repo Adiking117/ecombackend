@@ -4,7 +4,7 @@ import { registerUser,loginUser, updateUserProfile, logoutUser, getDetails, getA
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { start,end } from "../middlewares/session.middlewares.js"
 import { getOrder, getProductReviews, viewGalleryImage, viewGalleryImages } from "../controllers/admin.controllers.js"
-import { getRecommendedExercisesByExerciseUserGoals, getRecommendedProductsByAgeHeightWeight, getRecommendedProductsByFrequentlyBuying, getRecommendedProductsByFrequentlyBuyingStorePage, getRecommendedProductsByGoalGender, getRecommendedProductsByProductUserGoals, getRecommendedProductsByRecentlyPurchasedProducts, getRecommendedProductsByRecentlySearchedProducts, getRecommendedProductsByRecentlyViewedProducts, getRecommendedProductsByTimeLine, getRecommendedProductsByTop5PurchasedProducts } from "../recommendations/recommendation.controllers.js"
+import { getRecommendedExercisesByExerciseUserGoals, getRecommendedProductsByAdmin, getRecommendedProductsByAgeHeightWeight, getRecommendedProductsByFrequentlyBuying, getRecommendedProductsByFrequentlyBuyingStorePage, getRecommendedProductsByGoalGender, getRecommendedProductsByProductUserGoals, getRecommendedProductsByRecentlyPurchasedProducts, getRecommendedProductsByRecentlySearchedProducts, getRecommendedProductsByRecentlyViewedProducts, getRecommendedProductsByTimeLine, getRecommendedProductsByTop5PurchasedProducts } from "../recommendations/recommendation.controllers.js"
 import { getAssignedOrders, getDeliveredOrdersHistory, otpVerification, requestAdminForEmployement, sendOtpToUser } from "../controllers/employee.controllers.js"
 
 const userRouter = Router()
@@ -135,6 +135,7 @@ userRouter.route("/view/products/recommendation/top5Purchase").get(verifyJWT,get
 
 userRouter.route("/view/products/recommendation/getByTime").get(verifyJWT,getRecommendedProductsByTimeLine)
 
+userRouter.route("/view/products/recommendation/getFromAdmin").get(verifyJWT,getRecommendedProductsByAdmin)
 
 // employee
 userRouter.route("/greviences/send").post(verifyJWT,requestAdminForEmployement)
