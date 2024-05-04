@@ -55,7 +55,7 @@ try:
         review_special_removed = remove_special(review_clean)
         review_tokenized = word_tokenize(review_special_removed.lower())
         review_no_stopwords = [word for word in review_tokenized if word not in stop_words]
-        review_stemmed = [stemmer.stem(word) for word in review_no_stopwords]
+        review_stemmed = [stemmer.stem(word) for word in review_tokenized]
         review_processed = ' '.join(review_stemmed)
         return review_processed
 

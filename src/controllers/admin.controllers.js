@@ -980,7 +980,7 @@ const userNegativeReviews = asyncHandler(async(req, res) => {
                 const cleanedData = data.toString().trim();
                 const trimmedData = cleanedData.slice(1, -1);
                 const negativeUserIds = trimmedData.split(',').map(id => id.trim().replace(/'/g, ''));
-                
+                console.log(negativeUserIds)
                 for (const id of negativeUserIds) {
                     if (id) {
                         const user = await User.findById(id);
@@ -1209,6 +1209,142 @@ const recommendProductsBySimilarity = asyncHandler(async(req,res)=>{
 })
 
 
+const customRecommendations = asyncHandler(async(req,res)=>{
+    const user = await UserHistory.findOne({user:req.params.id}).populate({
+        path: 'user',
+        select: 'userName firstName lastName',
+        populate: {
+            path: 'userProfile',
+            select: 'height weight gender bpLevel diabetesLevel cholesterolLevel'
+        }
+    });
+    const bmi = user.user.userProfile.height/user.user.userProfile.weight
+    const bmiCat = (bmi <= 18.5)?"Underweight":((bmi >= 25 && bmi <= 29.9))?"Normal":"Overweight"
+
+    const user_details = {
+        "BMI": bmiCat,
+        "Gender": user.user.userProfile.gender.charAt(0).toUpperCase() + user.user.userProfile.gender.slice(1),
+        "Blood_Pressure": user.user.userProfile.bpLevel,
+        "Diabetes": user.user.userProfile.diabetesLevel,
+        "Cholesterol_Level": user.user.userProfile.cholesterolLevel
+    };
+
+    const products = {
+        bulk: [
+          "Whey Protein Powder",
+          "Creatine Monohydrate",
+          "Mass Gainer Supplement",
+          "BCAA (Branched-Chain Amino Acids)",
+          "Pre-Workout Supplement",
+          "Protein Shake Ready-to-Drink (RTD)",
+          "Thermogenic Fat Burner",
+          "Carb Powder",
+          "Nitric Oxide Booster",
+          "Muscle Recovery Cream",
+          "Post-Workout Protein Shake Mix",
+          "Protein-rich Energy Bites",
+          "Testosterone Boosting Supplements"
+        ],
+        cut: [
+          "Protein Coffee",
+          "CLA (Conjugated Linoleic Acid) Supplement",
+          "Electrolyte Drink Mix",
+          "Thermogenic Fat Burner",
+          "Muscle Recovery Cream",
+          "Omega-3 Fish Oil Supplements",
+          "Branched-Chain Amino Acid Capsules",
+          "Greens Superfood Powder",
+          "Antioxidant-Rich Superfood Supplements"
+        ],
+        lean: [
+          "Peanut Butter Protein Powder",
+          "Vegan Protein Powder",
+          "Casein Protein Powder",
+          "Post-Workout Recovery Drink",
+          "Glutamine Supplement",
+          "Fish Oil Capsules",
+          "Multivitamin for Athletes",
+          "Joint Support Supplement",
+          "Protein Cookies",
+          "Protein Pancake Mix",
+          "Protein Brownie Mix",
+          "Protein Ice Cream Mix",
+          "Protein Water",
+          "Protein Pasta",
+          "Protein Chips",
+          "Protein Popcorn",
+          "Electrolyte Drink Mix",
+          "Muscle Recovery Supplements",
+          "Post-Workout Protein Shake Mix",
+          "Electrolyte Drink Tablets",
+          "Collagen Peptides Powder",
+          "Meal Replacement Shakes",
+          "Plant-Based Meal Prep Services",
+          "Hydration Pack for Running",
+          "Energy Gel Packs for Endurance",
+          "Electrolyte Powders for Hydration",
+          "Hydration Mix with Probiotics",
+          "Plant-Based Protein Bars",
+          "Vegan Protein Bars"
+        ]
+    };
+
+    try {
+        const pythonScriptPath = recommendations + "/custom/custom.py";
+
+        const pythonProcess = spawn('python', [pythonScriptPath, JSON.stringify(user_details)]);
+
+        pythonProcess.stdout.on('data', async (data) => {
+            try {
+                const goal = data.toString().trim().toLowerCase();
+                const productsWithGoal = products[goal].sort(() => Math.random() - 0.5).slice(0, 4);
+                let listOfProductsAsPerTheGoal = [];
+                for(const p of productsWithGoal){
+                    const product = await Product.findOne({name:p})
+                    listOfProductsAsPerTheGoal.push(product.toObject())
+                }
+                return res
+                .status(200)
+                .json(
+                    new ApiResponse(200, listOfProductsAsPerTheGoal, "Products as per goal fetched succeesfully")
+                );
+            } catch (error) {
+                console.error("Error processing churned users:", error);
+                // Handle error processing data without crashing Node.js server
+                return res.status(500).json({ message: 'Error processing churned users' });
+            }
+        });
+        
+        pythonProcess.stderr.on('data', (data) => {
+            console.error(`Error from Python script: ${data}`);
+            // Handle error from Python script without crashing Node.js server
+            return res.status(500).json({ message: 'Error from Python script' });
+        });
+
+        pythonProcess.on('close', (code) => {
+            if (code !== 0) {
+                console.error(`Python script exited with code ${code}`);
+                // Handle non-zero exit code without crashing Node.js server
+                return res.status(500).json({ message: 'Python script exited with non-zero code' });
+            } else {
+                console.log('Python script exited normally');
+            }
+        });
+
+        // Handle Python process error event
+        pythonProcess.on('error', (error) => {
+            console.error('Python process error:', error);
+            // Handle Python process error without crashing Node.js server
+            return res.status(500).json({ message: 'Python process error' });
+        });
+    } catch (error) {
+        console.error('Error in userLikelyToBeChurned function:', error);
+        // Handle unexpected errors without crashing Node.js server
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+})
+
+
 export{
     getAllUser,
     getUser,
@@ -1251,5 +1387,6 @@ export{
     getAbandonUsers,
     findAbandonUsers,
     groupNotifications,
-    recommendProductsBySimilarity
+    recommendProductsBySimilarity,
+    customRecommendations
 }

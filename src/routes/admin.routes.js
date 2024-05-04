@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { verifyJWT,authorizeRoles } from "../middlewares/auth.middlewares.js"
 import { upload } from "../middlewares/multer.middlewares.js"
-import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, completeOrder, getPlacedOrders, getDeliveredOrders, addExercises, veiwAllExercises, viewExercise, deleteExercise, viewGreviences, viewUserGrevience, responseForEmployement, getAllAvailableDeliveryPartners, assignOrder, getShippingOrders, getApprovedOrders, getChurnedUsers, userLikelyToBeChurned, getNeggaUsers, userNegativeReviews, sendNotificationsToUser, findSimilarUsers, getAbandonUsers, findAbandonUsers, groupNotifications, recommendProductsBySimilarity } from "../controllers/admin.controllers.js";
+import { addGalleryImages, addProducts, deleteGalleryImage, deleteUser, getAllUser, getUser, makeUserAdmin, viewGalleryImage, viewGalleryImages, viewAllProducts, viewProduct, updateProductDetails, updateProductImage, deleteProduct, getProductReviews, makeAdminUser, getAllOrders, getOrder, completeOrder, getPlacedOrders, getDeliveredOrders, addExercises, veiwAllExercises, viewExercise, deleteExercise, viewGreviences, viewUserGrevience, responseForEmployement, getAllAvailableDeliveryPartners, assignOrder, getShippingOrders, getApprovedOrders, getChurnedUsers, userLikelyToBeChurned, getNeggaUsers, userNegativeReviews, sendNotificationsToUser, findSimilarUsers, getAbandonUsers, findAbandonUsers, groupNotifications, recommendProductsBySimilarity, customRecommendations } from "../controllers/admin.controllers.js";
 
 const adminRouter = Router();
 
@@ -167,5 +167,7 @@ adminRouter.route("/view/cartAbandon/getUsers").get(verifyJWT,authorizeRoles(["a
 adminRouter.route("/view/users/groupNot").put(verifyJWT,authorizeRoles(["admin","superadmin"]),groupNotifications)
 
 adminRouter.route("/view/users/:userId/similRecom/:productId").put(verifyJWT,authorizeRoles(["admin","superadmin"]),recommendProductsBySimilarity)
+
+adminRouter.route("/view/users/:id/custRec").put(verifyJWT,authorizeRoles(["admin","superadmin"]),customRecommendations)
 
 export default adminRouter

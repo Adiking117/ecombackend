@@ -191,7 +191,7 @@ const updateUserProfile = asyncHandler(async(req,res)=>{
 
         const { age, weight, height, goal, gender, country, city, systolicBp , diastolicBp , diabetes,cholesterol } = req.body;
     
-        if (!age || !weight || !height || !goal || !gender || !country || !city || !bp || !diabetes || !cholesterol) {
+        if (!age || !weight || !height || !goal || !gender || !country || !city  || !systolicBp || !diastolicBp || !diabetes || !cholesterol) {
           throw new ApiError(400, "All fields are required");
         }
         
