@@ -43,13 +43,13 @@ userRouter.route("/gallery/:id").get(viewGalleryImage)
 
 
 // Products
-userRouter.route("/view/products/search").get(verifyJWT,getProductsBySearch)
+userRouter.route("/view/products/search").get(getProductsBySearch)
 
-userRouter.route("/view/products").get(verifyJWT,getAllProducts)
+userRouter.route("/view/products").get(getAllProducts)
 
-userRouter.route("/view/products/:id").get(verifyJWT,getProduct)
+userRouter.route("/view/products/:id").get(getProduct)
 
-userRouter.route("/view/products").get(verifyJWT,getProductsByCategory)
+userRouter.route("/view/products").get(getProductsByCategory)
 
 
 // Review & Rate a Product
@@ -131,7 +131,7 @@ userRouter.route("/view/products/recommendation/prevView").get(verifyJWT,getReco
 
 userRouter.route("/view/products/recommendation/prevSearch").get(verifyJWT,getRecommendedProductsByRecentlySearchedProducts)
 
-userRouter.route("/view/products/recommendation/top5Purchase").get(verifyJWT,getRecommendedProductsByTop5PurchasedProducts)
+userRouter.route("/view/products/recommendation/top5Purchase").get(getRecommendedProductsByTop5PurchasedProducts)
 
 userRouter.route("/view/products/recommendation/getByTime").get(verifyJWT,getRecommendedProductsByTimeLine)
 
