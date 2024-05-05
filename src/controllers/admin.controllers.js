@@ -1297,12 +1297,13 @@ const customRecommendations = asyncHandler(async(req,res)=>{
         pythonProcess.stdout.on('data', async (data) => {
             try {
                 const goal = data.toString().trim().toLowerCase();
-                const productsWithGoal = products[goal].sort(() => Math.random() - 0.5).slice(0, 4);
-                // let listOfProductsAsPerTheGoal = [];
+                const productsWithGoal = products[goal].sort(() => Math.random() - 0.5).slice(0, 2);
+                //let listOfProductsAsPerTheGoal = [];
                 for(const p of productsWithGoal){
                     const product = await Product.findOne({name:p})
                     user.recommendedByAdmin.push(product.toObject())
                 }
+                await user.save();
                 return res
                 .status(200)
                 .json(
