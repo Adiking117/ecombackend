@@ -1346,6 +1346,21 @@ const customRecommendations = asyncHandler(async(req,res)=>{
 })
 
 
+const getAdminDashboard = asyncHandler(async(req,res)=>{
+    const user = await User.find();
+    let revenue = 0;
+    user.map((u)=>{
+        for(const o of u.orderHistory){
+            revenue += o.subtotalPrice
+        }
+    })
+    const dashDeatils = {
+        userRegistered:user.length,
+        totalRevenue : revenue
+    }
+    return res.status(200).json(new ApiResponse(200,dashDeatils,"Dashboard details fetched sucesfully"))
+})
+
 export{
     getAllUser,
     getUser,
@@ -1389,5 +1404,6 @@ export{
     findAbandonUsers,
     groupNotifications,
     recommendProductsBySimilarity,
-    customRecommendations
+    customRecommendations,
+    getAdminDashboard
 }
