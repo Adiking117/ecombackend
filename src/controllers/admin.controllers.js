@@ -851,7 +851,9 @@ const userLikelyToBeChurned = asyncHandler(async (req, res) => {
                 const arrayOfStrings = cleanedData.slice(1, -1).split(" ").map(str => str.replace(/'/g, '').trim());
                 for(const u of arrayOfStrings){
                     const user = await User.findById(u)
-                    userWhoWillAbandon.push(user.toObject())
+                    if(user.role==='user'){
+                        userWhoWillAbandon.push(user.toObject())
+                    }
                 }
                 return res.status(200).json(new ApiResponse(200, userWhoWillAbandon, "User Churned List fetched Successfully"));
             } catch (error) {
@@ -984,7 +986,7 @@ const userNegativeReviews = asyncHandler(async(req, res) => {
                 for (const id of negativeUserIds) {
                     if (id) {
                         const user = await User.findById(id);
-                        if (user) {
+                        if (user && user.role==='user') {
                             usersToBeNegative.push({
                                 _id: user._id,
                                 user : user.userName,
@@ -1137,7 +1139,9 @@ const findAbandonUsers = asyncHandler(async(req,res)=>{
                 const arrayOfStrings = cleanedData.slice(1, -1).split(" ").map(str => str.replace(/'/g, '').replace(/,/g, '').trim());
                 for(const u of arrayOfStrings){
                     const user = await User.findById(u);
-                    userWhoWillAbandon.push(user.toObject());
+                    if(user.role === 'user'){
+                        userWhoWillAbandon.push(user.toObject());
+                    }
                 }
                 return res.status(200).json(new ApiResponse(200, userWhoWillAbandon, "User Abandon List fetched Successfully"));
             } catch (error) {
