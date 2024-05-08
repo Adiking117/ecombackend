@@ -378,7 +378,7 @@ const getRecommendedProductsByAdmin = asyncHandler(async(req,res)=>{
     return res
     .status(200)
     .json(
-        new ApiResponse(200,user.recommendedByAdmin,"Admin Recommednation successfully")
+        new ApiResponse(200,user.recommendedByAdmin.slice(-6),"Admin Recommednation successfully")
     )
 })
 
