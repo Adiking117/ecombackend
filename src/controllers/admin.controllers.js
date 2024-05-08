@@ -1351,7 +1351,7 @@ const customRecommendations = asyncHandler(async(req,res)=>{
 
 
 const getAdminDashboard = asyncHandler(async(req,res)=>{
-    const user = await User.find();
+    const user = await User.find({role:'user'});
     let revenue = 0;
     user.map((u)=>{
         for(const o of u.orderHistory){
