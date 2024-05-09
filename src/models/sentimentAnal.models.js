@@ -9,6 +9,10 @@ const reviewSentSchema = new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"Product"
     },
+    review:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Review"
+    },
     rating:{
         type:Number
     },

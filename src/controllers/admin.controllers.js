@@ -899,33 +899,45 @@ const getNeggaUsers = asyncHandler(async (req, res) => {
     const users = await User.find({ role: 'user' }).populate('userReview');
     const currentDate = new Date();
     const oneMonthAgo = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate());
-
-    let newReviews = [];
+    // console.log(users)
+    //let newReviews = [];
     for (const u of users) {
         for (const c of u.userReview) {
             const existingReview = await ReviewSentiment.findOne({
-                user: c.user.toString()
+                review: c._id.toString()
             });
+            // console.log(existingReview)
 
-            if (!existingReview) {
-                newReviews.push({
+            // if (!existingReview) {
+            //     newReviews.push({
+            //         user: c.user,
+            //         product: c.product,
+            //         rating: c.rating,
+            //         comment: c.comment
+            //     });
+            // }
+
+            if(!existingReview){
+                await ReviewSentiment.create({
                     user: c.user,
                     product: c.product,
+                    review:c.review,
                     rating: c.rating,
                     comment: c.comment
-                });
+                })
             }
         }
     }
+    //console.log(newReviews.length)
 
-    try {
-        if (newReviews.length > 0) {
-            await ReviewSentiment.insertMany(newReviews);
-        }
-    } catch (error) {
-        console.error('Error storing new reviews:', error);
-        return res.status(500).json({ error: 'Internal Server Error' });
-    }
+    // try {
+    //     if (newReviews.length > 0) {
+    //         await ReviewSentiment.insertMany(newReviews);
+    //     }
+    // } catch (error) {
+    //     console.error('Error storing new reviews:', error);
+    //     return res.status(500).json({ error: 'Internal Server Error' });
+    // }
 
     try {
         await ReviewSentiment.deleteMany({ createdAt: { $lt: oneMonthAgo } });
@@ -982,7 +994,7 @@ const userNegativeReviews = asyncHandler(async(req, res) => {
                 const cleanedData = data.toString().trim();
                 const trimmedData = cleanedData.slice(1, -1);
                 const negativeUserIds = trimmedData.split(',').map(id => id.trim().replace(/'/g, ''));
-                console.log(negativeUserIds)
+                // console.log(negativeUserIds)
                 for (const id of negativeUserIds) {
                     if (id) {
                         const user = await User.findById(id);
