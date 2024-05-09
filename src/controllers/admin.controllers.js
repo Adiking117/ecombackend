@@ -1360,7 +1360,7 @@ const getAdminDashboard = asyncHandler(async(req,res)=>{
     })
     const dashDeatils = {
         userRegistered:user.length,
-        totalRevenue : revenue
+        totalRevenue : revenue.toFixed(2)
     }
     return res.status(200).json(new ApiResponse(200,dashDeatils,"Dashboard details fetched sucesfully"))
 })
